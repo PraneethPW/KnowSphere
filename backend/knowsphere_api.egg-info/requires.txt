@@ -1,0 +1,16 @@
+fastapi<1,>=0.115
+uvicorn[standard]<1,>=0.34
+psycopg[binary,pool]<4,>=3.2
+pydantic-settings<3,>=2.7
+httpx<1,>=0.28
+argon2-cffi<26,>=23.1
+python-multipart<1,>=0.0.20
+pypdf<7,>=5.3
+networkx<4,>=3.4
+scipy<2,>=1.15
+email-validator<3,>=2.2
+
+[dev]
+pytest<10,>=8
+pytest-asyncio<2,>=0.25
+ruff<1,>=0.9

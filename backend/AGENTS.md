@@ -1,0 +1,3 @@
+# Backend contribution notes
+
+Inherit `../AGENTS.md`. Use Python 3.12, typed Pydantic inputs and parameterized SQL. Qualify all tables with `knowsphere.`. Scope resources to the owned space before accessing them. Never substitute a model response in production. Keep OpenRouter credentials server-side, quote validation strict, leases fenced, checkpoints atomic and completed conversations persistent. Schema changes require a new numbered migration rather than editing an already-applied migration. Use only a disposable local `*_test` database for tests; never reset Neon. Run Python tests and Ruff checks, and update the hashed lockfiles when dependencies change.
