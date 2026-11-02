@@ -2,6 +2,8 @@
 
 An intelligent knowledge graph generation and discovery platform, built with real PostgreSQL persistence, OpenRouter inference, a durable ingestion worker, a 3D graph explorer, and source-grounded research conversations. New accounts and spaces start empty. There are no seed records, mock services, fabricated counters, or AI fallback answers.
 
+**Live application:** <https://knowsphere-ai-praneethpw.vercel.app>. The API and worker run on Railway with Neon and OpenRouter. See [DEPLOYMENT.md](DEPLOYMENT.md) for live resources, automatic Git deployments and hosted verification.
+
 ## Project layout
 
 ```text
@@ -71,17 +73,15 @@ No paper was supplied. This is an independently implemented graph-assisted retri
 
 The local project is at `/Users/praneethreddy/Freelance Projects /KnowSphere-AI`. The existing parent folder has a trailing space in its name; preserve it when using an absolute shell path. From your current `Freelance Projects` terminal, simply run `cd KnowSphere-AI`.
 
-Git has been initialized on `main`. The private `backend/.env`, virtual environment, Node dependencies and build output are ignored. Create an empty private GitHub repository, then use its actual URL:
+The project is connected to `PraneethPW/KnowSphere` on `main`. The private `backend/.env`, virtual environment, Node dependencies and build output are ignored. To push an intentional change from the local project:
 
 ```bash
 git add .
-git commit -m "Build KnowSphere AI"
-# Add your actual newly created repository URL:
-git remote add origin YOUR_GITHUB_REPOSITORY_URL
+git commit -m "Describe your change"
 git push -u origin main
 ```
 
-If Git requests an author identity, configure your own name and email locally before committing. Connect this repository to Railway and Vercel using the folder-specific settings below.
+If Git requests an author identity, configure your own name and email locally before committing. The repository is already connected to Railway and Vercel; the folder-specific guides also explain how to reproduce the deployment.
 
 ## Local installation
 

@@ -41,12 +41,22 @@ Database integration tests ran on an isolated, disposable local PostgreSQL datab
 
 The supplied credentials are stored only in the ignored local backend environment file. Archives do not include them.
 
-## Remaining external verification
+## Hosted verification — completed after the initial local build
 
-- Railway and Vercel have **not** been deployed. The selected Railway connection is **Praneeth**. A new connected GitHub repository / source URL is still required for the Railway source deployment.
-- The Vercel proxy must be generated from the actual deployed Railway API origin before deployment. Its build preflight rejects an unconfigured rewrite.
-- Hosted first-party cookies, hosted streaming/reconnects, proxy upload limits, and the complete production URL flow still require verification after deployment.
-- Docker configuration is included, but no local container image build was performed because the local Docker daemon was unavailable.
+The public Vercel frontend, both Railway services, and the real Neon/OpenRouter integrations have now been deployed and tested. The application code deployment is based on commit `463ae46` in `PraneethPW/KnowSphere`; subsequent documentation commits retain that application behavior.
+
+Live application: <https://knowsphere-ai-praneethpw.vercel.app>. API readiness: <https://knowsphere-api-production.up.railway.app/api/health/ready>.
+
+The hosted checks passed for first-party Secure/HttpOnly cookies, registration, session persistence, an initially empty space, worker heartbeat, multipart upload, resource-isolated Linux parsing, live SSE propagation through Vercel, real Railway-worker extraction, Neon graph persistence, graph export, actual provider token streaming, saved citations, and logout revocation. The cloud test source produced **17 entities and 16 relationships** on its first ingestion attempt. The answer streamed 10 provider token events using `dots-studio/dots-3-note-preview:free` and retained a valid source citation.
+
+The local worker was stopped during this check so it could not satisfy the cloud job. The hosted application was also checked in the browser: sign-in, 3D graph rendering, stored conversation reload, and source evidence. No browser console errors were observed during those checks. The GitHub Actions workflow passed for the deployment commit, including the new Railway IaC type check.
+
+Vercel and both Railway services are connected to the repository for future pushes. The obsolete `railway.json` files were replaced by type-checked `.railway/railway.ts`; new Railway services no longer accept Config as Code. Infrastructure changes require a separate reviewed plan/apply. See `DEPLOYMENT.md` for the service URLs and operating details.
+
+## Remaining verification limits
+
+- Uploads were verified with a small TXT document. The maximum advertised file size, large PDFs and provider saturation still need workload-specific hosted testing.
+- The Docker image built and ran successfully on Railway. A local container build was not performed because the local Docker daemon was unavailable.
 - No load-test capacity, penetration-test certification, enterprise compliance or provider uptime guarantee is claimed. OpenRouter free-model quotas and availability remain external constraints.
 - A Three.js core chunk remains large (~704 kB uncompressed, ~181 kB gzip). It is loaded lazily; browser bundle-size optimization can be expanded if required for a specific mobile performance target.
 
@@ -54,6 +64,6 @@ The supplied credentials are stored only in the ignored local backend environmen
 
 Project: `/Users/praneethreddy/Freelance Projects /KnowSphere-AI` (the existing parent folder contains a trailing space).
 
-Frontend: <http://127.0.0.1:5173>. API readiness: <http://127.0.0.1:8000/api/health/ready>.
+Local frontend: <http://127.0.0.1:5173>. Local API readiness: <http://127.0.0.1:8000/api/health/ready>. These are separate from the public production URLs above.
 
-Separate setup, operation and deployment guides are in `frontend/README.md` and `backend/README.md`. Git is initialized on `main`; no remote repository has been guessed or configured.
+Separate setup, operation and deployment guides are in `frontend/README.md` and `backend/README.md`. Git is connected to the user-supplied repository `PraneethPW/KnowSphere` on `main`.
