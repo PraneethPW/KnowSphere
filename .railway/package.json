@@ -1,0 +1,7 @@
+{
+  "name": "knowsphere-infrastructure",
+  "private": true,
+  "type": "module",
+  "scripts": { "check": "tsc --noEmit" },
+  "devDependencies": { "railway": "^3.12.0", "typescript": "~5.9.3" }
+}

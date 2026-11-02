@@ -91,12 +91,12 @@ Louvain groups and PageRank operate on the bounded visible graph. Model-provided
 
 ## Railway deployment
 
-Use a Git repository connected to the selected Railway account. Create a private project with **two services pointing to the same source**:
+Use a Git repository connected to the selected Railway account. Current service settings are recorded in `../.railway/railway.ts`; see its README for planning and applying infrastructure changes. New Railway services no longer support the old `railway.json` configuration. Create a private project with **two services pointing to the same source**:
 
 | Setting | API service | Worker service |
 | --- | --- | --- |
 | Root Directory | `/backend` | `/backend` |
-| Config file | `/backend/railway.json` | `/backend/railway.worker.json` |
+| Infrastructure source | `../.railway/railway.ts` | Same project-level file |
 | Build | Included Dockerfile | Included Dockerfile |
 | Start | Uvicorn on `$PORT` | `python -m knowsphere.worker` |
 | Pre-deploy | `python -m knowsphere.migrate` | `python -m knowsphere.migrate` |

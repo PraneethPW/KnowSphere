@@ -16,8 +16,8 @@ KnowSphere-AI/
 │   ├── migrations/           Versioned PostgreSQL schema
 │   ├── tests/                Unit and PostgreSQL integration tests
 │   ├── Dockerfile            Non-root production container
-│   ├── railway*.json         API and worker deployment configuration
 │   └── README.md             Backend setup, API, deployment and operational notes
+├── .railway/                 Current Railway Infrastructure as Code
 ├── .github/workflows/ci.yml
 ├── AGENTS.md
 └── VERIFICATION.md
@@ -150,7 +150,7 @@ Without `TEST_DATABASE_URL`, unit tests run and database integration tests are e
 
 ## Production deployment
 
-Read both folder READMEs. Deploy **two Railway services**, using `backend` as their root directory: the API with `railway.json`, and the worker with `railway.worker.json`. Set backend secrets on both services, and enable TLS cookies and the exact Vercel frontend origin. Run migrations as a pre-deploy command.
+Read both folder READMEs. Deploy **two Railway services**, using `backend` as their root directory: `knowsphere-api` and `knowsphere-worker`. Current configuration is recorded in `.railway/railway.ts`; see `.railway/README.md`. Railway no longer accepts `railway.json` for new services. Set backend secrets on both services, and enable TLS cookies and the exact Vercel frontend origin. Run migrations as a pre-deploy command.
 
 Deploy the frontend from the `frontend` root directory on Vercel. Before submitting that deployment, generate and commit the same-origin proxy using the actual Railway API origin:
 
