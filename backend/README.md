@@ -33,8 +33,8 @@ Development API documentation: <http://127.0.0.1:8000/api/docs>. Production disa
 | --- | --- |
 | `DATABASE_URL` | Neon PostgreSQL URI. Use `sslmode=require` or stronger; pooled endpoints are supported. Prepared statements are disabled for transaction pool compatibility. |
 | `OPENROUTER_API_KEY` | Backend-only OpenRouter credential |
-| `OPENROUTER_EXTRACTION_FALLBACKS` | Comma-separated free model IDs tried by OpenRouter on provider errors; default Dots 3 Note, then Gemma 4 31B. Set empty to disable. Paid IDs are rejected. |
-| `OPENROUTER_EXTRACTION_MODEL` | `google/gemma-4-26b-a4b-it:free` by default for compact structured extraction; configure another free ID if availability changes |
+| `OPENROUTER_EXTRACTION_FALLBACKS` | Comma-separated free model IDs tried by OpenRouter on provider errors; default Xing 4, then Nemotron 3.5 Super VL. Set empty to disable. Paid IDs are rejected. |
+| `OPENROUTER_EXTRACTION_MODEL` | `dots-studio/dots-3-note-preview:free` by default for compact structured extraction; configure another free ID if availability changes |
 | `OPENROUTER_MODEL` | `openrouter/free` or a model ending in `:free`; paid IDs are rejected |
 | `APP_ENV` | `development` locally; `production` for Railway |
 | `ALLOWED_ORIGINS` | Comma-separated exact frontend origins; production requires HTTPS |
@@ -151,3 +151,5 @@ This is a working individual-workspace release. Public launch still needs hosted
 `GET /api/spaces/{space_id}/operations` returns owner-scoped document jobs with durable chunk completion counts and source-validated mention/relationship counts. `GET /api/spaces/{space_id}/activity?limit=50&before=<event_id>` returns newest-first durable events; limits are bounded to 100 and retention remains seven days. Both endpoints enforce space ownership.
 
 The existing events stream now includes named `heartbeat` frames with server time/cursor, plus explicit chunking, extracting and committed-checkpoint events. `change` frames include stable event IDs. Chat streams add `stage` frames (`retrieved`, `generating`, `validating`) and measured `elapsed_ms`/`token_events` in `done`. Existing `context`, `token`, `done`, and `error` frames are preserved. No migrations are required. `OPENROUTER_EXTRACTION_MODEL` optionally overrides the free structured-extraction model; it is separate from the answer model.
+
+Extraction uses strict JSON Schema output and routes only to endpoints accepting the required parameters. Defaults are non-mandatory-reasoning free models with reasoning disabled. `OPENROUTER_EXTRACTION_REASONING=true` can enable reasoning if you deliberately configure a compatible reasoning model. The server still validates required fields, array bounds, and source quotes; provider schema support never substitutes for server validation.

@@ -99,3 +99,16 @@ async def test_upload_parser_uses_isolated_process():
     assert content == source and format == "txt"
     with pytest.raises(ValueError, match="valid PDF"):
         await parse_isolated(b"This is not a PDF.", "file.pdf", 120000)
+
+
+def test_extraction_requires_relationship_confidence_and_rejects_extra_fields():
+    relation = {
+        "source": "KnowSphere",
+        "target": "Neon",
+        "label": "uses",
+        "evidence": "KnowSphere uses Neon.",
+    }
+    with pytest.raises(ValidationError, match="confidence"):
+        Extraction.model_validate({"entities": [], "relationships": [relation]})
+    with pytest.raises(ValidationError, match="Extra inputs"):
+        Extraction.model_validate({"entities": [], "relationships": [], "invented": True})

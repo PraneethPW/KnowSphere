@@ -60,7 +60,7 @@ Upload a document through **Launch ingestion**, open **Live operations** in a se
 | Frontend | React 19, TypeScript, Vite, Tailwind CSS 4, Framer Motion, React Three Fiber / Three.js, TanStack Query |
 | API | Python 3.12, FastAPI, Pydantic, psycopg async connection pool |
 | Database | Neon PostgreSQL; all tables are isolated in the `knowsphere` schema |
-| AI | OpenRouter Chat Completions; `openrouter/free` for answers; configurable Gemma 4 free model for compact extraction; paid model IDs rejected |
+| AI | OpenRouter Chat Completions; `openrouter/free` for answers; configurable Dots 3 Note free model for compact extraction; paid model IDs rejected |
 | Retrieval | Indexed PostgreSQL full-text search, entity matches and one-hop graph evidence expansion |
 | Graph analytics | NetworkX PageRank, Louvain and connected components |
 | Backend hosting | Railway: one API service and one continuously running worker |

@@ -3,7 +3,7 @@ import json
 from typing import Literal
 
 import httpx
-from pydantic import BaseModel, Field, PrivateAttr, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, ValidationError
 
 from .config import settings
 
@@ -16,6 +16,7 @@ class AIError(Exception):
 
 
 class Entity(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name: str = Field(min_length=1, max_length=160)
     kind: Literal["person", "organization", "concept", "technology", "location", "event"]
     description: str = Field(min_length=1, max_length=800)
@@ -23,6 +24,7 @@ class Entity(BaseModel):
 
 
 class Relation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     source: str = Field(min_length=1, max_length=160)
     target: str = Field(min_length=1, max_length=160)
     label: str = Field(min_length=1, max_length=100)
@@ -31,9 +33,10 @@ class Relation(BaseModel):
 
 
 class Extraction(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     _provider_model: str = PrivateAttr(default="")
-    entities: list[Entity] = Field(max_length=60)
-    relationships: list[Relation] = Field(max_length=100)
+    entities: list[Entity] = Field(max_length=16)
+    relationships: list[Relation] = Field(max_length=20)
 
 
 SYSTEM_EXTRACT = """Extract a factual knowledge graph from the supplied document excerpt.
@@ -62,10 +65,17 @@ async def completion(messages: list[dict], *, json_mode=False) -> tuple[str, str
     }
     if config.extraction_fallbacks:
         payload["models"] = config.extraction_fallbacks
-    if config.openrouter_extraction_model.startswith("google/gemma-4-"):
-        payload["reasoning"] = {"enabled": False}
+    payload["reasoning"] = {"enabled": config.openrouter_extraction_reasoning}
     if json_mode:
-        payload["response_format"] = {"type": "json_object"}
+        payload["response_format"] = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "knowledge_graph",
+                "strict": True,
+                "schema": Extraction.model_json_schema(),
+            },
+        }
+        payload["provider"] = {"require_parameters": True}
     try:
         async with asyncio.timeout(120), httpx.AsyncClient(timeout=httpx.Timeout(110, connect=10)) as client:
             response = await client.post(

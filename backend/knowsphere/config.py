@@ -11,8 +11,11 @@ class Settings(BaseSettings):
     database_url: str = ""
     openrouter_api_key: str = ""
     openrouter_model: str = "openrouter/free"
-    openrouter_extraction_model: str = "google/gemma-4-26b-a4b-it:free"
-    openrouter_extraction_fallbacks: str = "dots-studio/dots-3-note-preview:free,google/gemma-4-31b-it:free"
+    openrouter_extraction_model: str = "dots-studio/dots-3-note-preview:free"
+    openrouter_extraction_reasoning: bool = False
+    openrouter_extraction_fallbacks: str = (
+        "xingchen-agi/xing4.0-29b-a4b:free,nvidia/nemotron-3.5-super-vl:free"
+    )
     app_env: str = "development"
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     cookie_secure: bool = False
