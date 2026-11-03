@@ -48,6 +48,10 @@ def test_upload_rejects_invalid_formats_and_no_text():
 def test_free_models_and_production_tls_are_enforced():
     with pytest.raises(ValidationError, match="free model"):
         Settings(_env_file=None, openrouter_model="provider/paid-model")
+    with pytest.raises(ValidationError, match="free model"):
+        Settings(_env_file=None, openrouter_extraction_model="provider/paid-model")
+    with pytest.raises(ValidationError, match="free model"):
+        Settings(_env_file=None, openrouter_extraction_fallbacks="provider/paid-model")
     with pytest.raises(ValidationError, match="secure cookies"):
         Settings(_env_file=None, app_env="production")
     with pytest.raises(ValidationError, match="TLS PostgreSQL"):

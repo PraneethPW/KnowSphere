@@ -283,7 +283,11 @@ export function SettingsPage() {
                 <div className="service-row">
                   <div>
                     <strong>OpenRouter AI</strong>
-                    <small>{system.data.model}</small>
+                    <small>
+                      Answers: {system.data.model}
+                      <br />
+                      Extraction: {system.data.extraction_model}
+                    </small>
                   </div>
                   <span
                     className={`service-state ${!system.data.ai_configured ? "offline" : ""}`}

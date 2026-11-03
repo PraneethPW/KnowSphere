@@ -119,6 +119,7 @@ async def save_extraction(job, chunk, graph: ai.Extraction):
                 "document_id": str(job["id"]),
                 "title": job["title"],
                 "stage": "checkpoint",
+                "model": graph._provider_model,
                 "progress": progress,
                 "chunks_done": row["done"],
                 "chunks_total": row["total"],

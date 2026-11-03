@@ -129,6 +129,11 @@ export function EventFeed({ compact = false }: { compact?: boolean }) {
         {rows.length ? (
           rows.map((e) => (
             <button
+              title={
+                e.payload.model
+                  ? `Extraction model: ${e.payload.model}`
+                  : undefined
+              }
               className={`mission-event ${e.kind === "graph.updated" ? "event-publish" : ""}`}
               key={e.id}
               onClick={() => inspect(e)}

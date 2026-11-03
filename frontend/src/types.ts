@@ -83,6 +83,7 @@ export type SourceDocument = {
 export type SystemInfo = {
   database: string;
   ai_configured: boolean;
+  extraction_model: string;
   model: string;
   worker: string;
   worker_last_seen: string | null;
@@ -137,6 +138,7 @@ export type ActivityEvent = {
     conversation_id?: string;
     status?: string;
     stage?: string;
+    model?: string;
     progress?: number;
     chunks_done?: number;
     chunks_total?: number;

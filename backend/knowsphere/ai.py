@@ -3,7 +3,7 @@ import json
 from typing import Literal
 
 import httpx
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, PrivateAttr, ValidationError
 
 from .config import settings
 
@@ -31,6 +31,7 @@ class Relation(BaseModel):
 
 
 class Extraction(BaseModel):
+    _provider_model: str = PrivateAttr(default="")
     entities: list[Entity] = Field(max_length=60)
     relationships: list[Relation] = Field(max_length=100)
 
@@ -54,11 +55,15 @@ async def completion(messages: list[dict], *, json_mode=False) -> tuple[str, str
     if not config.openrouter_api_key:
         raise AIError("OpenRouter is not configured. Add OPENROUTER_API_KEY to the backend environment.")
     payload = {
-        "model": config.openrouter_model,
+        "model": config.openrouter_extraction_model,
         "messages": messages,
         "temperature": 0.1,
         "max_tokens": 6000 if json_mode else 2500,
     }
+    if config.extraction_fallbacks:
+        payload["models"] = config.extraction_fallbacks
+    if config.openrouter_extraction_model.startswith("google/gemma-4-"):
+        payload["reasoning"] = {"enabled": False}
     if json_mode:
         payload["response_format"] = {"type": "json_object"}
     try:
@@ -84,13 +89,13 @@ async def completion(messages: list[dict], *, json_mode=False) -> tuple[str, str
         text = choice["message"]["content"]
         if not isinstance(text, str) or not text.strip() or choice.get("finish_reason") == "length":
             raise AIError("The AI returned an empty or incomplete response. Please retry.", True)
-        return text, data.get("model", config.openrouter_model)
+        return text, data.get("model", config.openrouter_extraction_model)
     except (TimeoutError, httpx.HTTPError, KeyError, ValueError, IndexError) as exc:
         raise AIError("The AI provider is temporarily unavailable. Please retry.", True) from exc
 
 
 async def extract(content: str) -> Extraction:
-    text, _ = await completion(
+    text, model = await completion(
         [
             {"role": "system", "content": SYSTEM_EXTRACT},
             {"role": "user", "content": f"<document_excerpt>\n{content}\n</document_excerpt>"},
@@ -101,7 +106,9 @@ async def extract(content: str) -> Extraction:
     if text.startswith("```"):
         text = text.split("\n", 1)[-1].rsplit("```", 1)[0]
     try:
-        return Extraction.model_validate(json.loads(text))
+        graph = Extraction.model_validate(json.loads(text))
+        graph._provider_model = model
+        return graph
     except (ValueError, ValidationError) as exc:
         raise AIError("The AI returned an invalid graph structure. The job can be retried.", True) from exc
 

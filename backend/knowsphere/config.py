@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     database_url: str = ""
     openrouter_api_key: str = ""
     openrouter_model: str = "openrouter/free"
+    openrouter_extraction_model: str = "google/gemma-4-26b-a4b-it:free"
+    openrouter_extraction_fallbacks: str = "dots-studio/dots-3-note-preview:free,google/gemma-4-31b-it:free"
     app_env: str = "development"
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     cookie_secure: bool = False
@@ -27,6 +29,12 @@ class Settings(BaseSettings):
     def origins(self) -> list[str]:
         return [s.strip().rstrip("/") for s in self.allowed_origins.split(",") if s.strip()]
 
+    @property
+    def extraction_fallbacks(self) -> list[str]:
+        return list(
+            dict.fromkeys(s.strip() for s in self.openrouter_extraction_fallbacks.split(",") if s.strip())
+        )
+
     @model_validator(mode="after")
     def production_configuration(self):
         if self.app_env == "production":
@@ -35,8 +43,11 @@ class Settings(BaseSettings):
             tls = parse_qs(urlsplit(self.database_url).query).get("sslmode", [""])[0]
             if not self.database_url or tls not in {"require", "verify-ca", "verify-full"}:
                 raise ValueError("Production requires a TLS PostgreSQL connection string")
-        if self.openrouter_model != "openrouter/free" and not self.openrouter_model.endswith(":free"):
-            raise ValueError("Only OpenRouter free model IDs are allowed")
+        if len(self.extraction_fallbacks) > 3:
+            raise ValueError("At most three extraction fallbacks are allowed")
+        for model in (self.openrouter_model, self.openrouter_extraction_model, *self.extraction_fallbacks):
+            if model != "openrouter/free" and not model.endswith(":free"):
+                raise ValueError("Only OpenRouter free model IDs are allowed")
         return self
 
 

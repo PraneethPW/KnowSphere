@@ -752,6 +752,7 @@ async def system(user: User):
         "database": "connected",
         "ai_configured": bool(settings().openrouter_api_key),
         "model": settings().openrouter_model,
+        "extraction_model": settings().openrouter_extraction_model,
         "worker": "online" if alive["alive"] else "offline",
         "worker_last_seen": worker["last_seen"],
         "registration_enabled": settings().registration_enabled,

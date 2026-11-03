@@ -40,3 +40,9 @@ The complete public Vercel path was tested with a disposable verification accoun
 8. Revoke the session via logout. Remove the disposable account and its associated data after browser checks.
 
 See `VERIFICATION.md` for checks and limits. The functional checks do not substitute for capacity planning, uptime alerts, backup/restore rehearsal or a security assessment for a specific public workload.
+
+## Extraction model configuration
+
+The cockpit release adds `OPENROUTER_EXTRACTION_MODEL=google/gemma-4-26b-a4b-it:free` on the API and worker. `OPENROUTER_MODEL=openrouter/free` continues to route research answers. Both settings reject paid IDs. The extraction prompt selects up to 16 entities and 20 relationships per passage, with short quotes and a 120-second total provider deadline. This avoids oversized graphs and separates structured extraction from reasoning-heavy answer routing. Free provider availability can still require retries or a different free model ID.
+
+`OPENROUTER_EXTRACTION_FALLBACKS` supplies an ordered, free-only failover list for upstream quota/availability errors. Defaults: `dots-studio/dots-3-note-preview:free,google/gemma-4-31b-it:free`. The actual responding model is recorded on each committed checkpoint event. All extracted quotes still pass the same source check. Model failover never supplies fabricated data.

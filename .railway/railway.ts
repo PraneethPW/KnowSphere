@@ -5,6 +5,8 @@ const env = {
   DATABASE_URL: preserve(),
   OPENROUTER_API_KEY: preserve(),
   OPENROUTER_MODEL: "openrouter/free",
+  OPENROUTER_EXTRACTION_MODEL: "google/gemma-4-26b-a4b-it:free",
+  OPENROUTER_EXTRACTION_FALLBACKS: "dots-studio/dots-3-note-preview:free,google/gemma-4-31b-it:free",
   APP_ENV: "production",
   COOKIE_SECURE: "true",
   ALLOWED_ORIGINS: "https://knowsphere-ai-praneethpw.vercel.app",
