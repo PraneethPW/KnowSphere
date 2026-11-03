@@ -166,6 +166,14 @@ export default function ChatPage() {
               ),
             );
           }
+          if (eventName === "reset") {
+            setMessages((previous) =>
+              previous.map((m) =>
+                m.id === assistantId ? { ...m, content: "" } : m,
+              ),
+            );
+            setTrace((previous) => ({ ...previous, stage: "repairing" }));
+          }
           if (eventName === "token") {
             setTrace((previous) => ({
               ...previous,
@@ -675,7 +683,7 @@ function ResearchMonitor({
     "validating",
     "saved",
   ];
-  const current = stages.indexOf(trace.stage);
+  const current = trace.stage === "repairing" ? 3 : stages.indexOf(trace.stage);
   return (
     <aside className="research-monitor">
       <div className="eyebrow">
@@ -688,7 +696,9 @@ function ResearchMonitor({
             ? "Run interrupted"
             : trace.stage === "saved"
               ? "Answer committed"
-              : "Research in progress"}
+              : trace.stage === "repairing"
+                ? "Revising source references"
+                : "Research in progress"}
       </h3>
       <div className="research-stages">
         {[

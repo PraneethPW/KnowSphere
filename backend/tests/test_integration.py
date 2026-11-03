@@ -223,3 +223,45 @@ async def test_natural_question_retrieval_broadens_terms_without_inventing_conte
     assert r.status_code == 200 and r.json()[0]["content"] == content
     assert (await client.get(f"/api/spaces/{space}/search?q=purple+astronomy")).json() == []
     assert (await client.get(f"/api/spaces/{space}/search?q=the+and+or")).json() == []
+
+
+@pytest.mark.parametrize("repair_succeeds", [True, False])
+async def test_citation_revision_persists_only_valid_final_answer(client, monkeypatch, repair_succeeds):
+    from knowsphere import ai
+    from knowsphere.config import settings
+
+    space = await register(client)
+    content = "Neon stores the knowledge documents in PostgreSQL."
+    doc = await enqueue(space, "Storage notes", content, "text")
+    await db.execute("UPDATE knowsphere.documents SET status='ready' WHERE id=%s", (doc["id"],))
+    await db.execute(
+        "INSERT INTO knowsphere.chunks(document_id,ordinal,content,processed) VALUES (%s,0,%s,true)",
+        (doc["id"], content),
+    )
+    monkeypatch.setattr(settings(), "openrouter_api_key", "isolated-test-only")
+    calls = []
+
+    # Isolated provider fixtures exercise persistence and repair; no runtime fallback is installed.
+    async def fixture_answer(prompt):
+        calls.append(prompt)
+        yield {"model": "isolated-fixture:free"}
+        if len(calls) == 1:
+            yield {"token": "Uncited draft [999]."}
+        else:
+            yield {
+                "token": "Neon stores documents in PostgreSQL [1]." if repair_succeeds else "Still uncited."
+            }
+
+    monkeypatch.setattr(ai, "stream_answer", fixture_answer)
+    r = await client.post(f"/api/spaces/{space}/chat", json={"message": "Where does Neon store documents?"})
+    assert r.status_code == 200 and len(calls) == 2
+    assert r.text.count("event: reset") == 1
+    assert "repairing" in r.text
+    messages = await db.fetch("SELECT role,content FROM knowsphere.messages ORDER BY created_at,id")
+    assert len(messages) == (2 if repair_succeeds else 1)
+    if repair_succeeds:
+        assert messages[-1]["content"] == "Neon stores documents in PostgreSQL [1]."
+        assert "event: done" in r.text
+    else:
+        assert "event: error" in r.text and "event: done" not in r.text
+    assert not (await db.one("SELECT run_token FROM knowsphere.conversations"))["run_token"]

@@ -68,3 +68,5 @@ The deployment preflight fails clearly when the rewrite has not been configured.
 The command-center radar uses actual graph records. Operations show worker checkpoints and retained events; tactical tools calculate paths on the visible filtered graph; Cmd/Ctrl+K opens entity/passage search. The comms research monitor renders measured request events, not simulated progress. Three.js remains lazy loaded and its rendering/layout resources are cleaned up when unmounted.
 
 If a browser tab outlives a deployment and its lazy bundle is no longer available, the module boundary offers an explicit reload notice. It does not silently reload while the operator is editing text.
+
+The research channel handles `reset` frames during a bounded citation-repair pass, replacing the provisional draft while retaining measured stream-event totals. The trace reports the repair and only marks the answer committed after the server's persistence event.
