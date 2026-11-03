@@ -110,6 +110,20 @@ async def retrieve(space_id, query: str, limit=8):
         ORDER BY score DESC,c.id LIMIT %s""",
         (query, space_id, query, limit),
     )
+    if not seeds:
+        # Natural questions rarely contain only words found together in a passage.
+        # Broaden indexed lexemes only when the precise query found nothing. Build
+        # the OR query from PostgreSQL's escaped/stemmed tsquery, never raw input.
+        seeds = await db.fetch(
+            """WITH q AS (SELECT to_tsquery('english',
+              replace(plainto_tsquery('english',%s)::text,' & ',' | ')) AS terms)
+            SELECT c.id,c.content,c.ordinal,d.id AS document_id,d.title,
+              ts_rank_cd(c.search,q.terms,32) AS score
+            FROM knowsphere.chunks c JOIN knowsphere.documents d ON d.id=c.document_id CROSS JOIN q
+            WHERE d.space_id=%s AND d.status='ready' AND c.search @@ q.terms
+            ORDER BY score DESC,c.id LIMIT %s""",
+            (query, space_id, limit),
+        )
     normalized = canonical(query)
     entity_ids = await db.fetch(
         """SELECT id FROM knowsphere.entities WHERE space_id=%s

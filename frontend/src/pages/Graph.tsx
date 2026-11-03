@@ -349,6 +349,7 @@ export default function GraphPage() {
               <label>
                 FROM
                 <select
+                  aria-label="Path start entity"
                   value={pathFrom}
                   onChange={(e) => setPathFrom(e.target.value)}
                 >
@@ -364,6 +365,7 @@ export default function GraphPage() {
               <label>
                 TO
                 <select
+                  aria-label="Path destination entity"
                   value={pathTo}
                   onChange={(e) => setPathTo(e.target.value)}
                 >

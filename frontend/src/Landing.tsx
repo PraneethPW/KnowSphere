@@ -19,16 +19,38 @@ import { Logo } from "./components/UI";
 const Orb = lazy(() => import("./components/Orb"));
 export class VisualBoundary extends Component<
   { children: ReactNode; fallback?: ReactNode },
-  { failed: boolean }
+  { failed: boolean; updated: boolean }
 > {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
+  state = { failed: false, updated: false };
+  static getDerivedStateFromError(error: Error) {
+    return {
+      failed: true,
+      updated: /dynamically imported|module script|Importing a module/i.test(
+        error.message,
+      ),
+    };
   }
   componentDidCatch(_error: Error, _info: ErrorInfo) {
     /* WebGL can be unavailable on low-power devices. */
   }
   render() {
+    if (this.state.updated)
+      return (
+        <div className="release-notice" role="alert">
+          <span className="eyebrow">COCKPIT UPDATE</span>
+          <h3>A new release is available.</h3>
+          <p>
+            Reload to load the latest interface. Save any text you are editing
+            before continuing.
+          </p>
+          <button
+            className="button button-primary"
+            onClick={() => window.location.reload()}
+          >
+            Reload cockpit <ArrowUpRight size={16} />
+          </button>
+        </div>
+      );
     return this.state.failed
       ? this.props.fallback || (
           <div className="orb-fallback" aria-hidden="true" />

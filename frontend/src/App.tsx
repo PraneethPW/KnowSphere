@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, X } from "lucide-react";
 import { api, ApiError } from "./api";
 import type { User } from "./types";
-import Landing from "./Landing";
+import Landing, { VisualBoundary } from "./Landing";
 import Auth from "./Auth";
 import { ErrorBox, Spinner, ToastContext } from "./components/UI";
 
@@ -32,15 +32,26 @@ function Protected() {
       </div>
     );
   return (
-    <Suspense
+    <VisualBoundary
       fallback={
         <div className="full-loader">
-          <Spinner label="Preparing your workspace" />
+          <ErrorBox
+            error="The workspace could not open. Reload the page to try again."
+            retry={() => window.location.reload()}
+          />
         </div>
       }
     >
-      <Workspace user={query.data!} />
-    </Suspense>
+      <Suspense
+        fallback={
+          <div className="full-loader">
+            <Spinner label="Preparing your workspace" />
+          </div>
+        }
+      >
+        <Workspace user={query.data!} />
+      </Suspense>
+    </VisualBoundary>
   );
 }
 export default function App() {

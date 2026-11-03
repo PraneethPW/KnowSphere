@@ -36,7 +36,7 @@ The two application source folders are `frontend` and `backend` (the spelling is
 - OpenRouter free-model entity and relationship extraction with structured validation. Quotes must occur in their source chunk; unsupported model evidence is discarded. Each passage requests up to 16 entities and 20 relationships to bound free-model output; extraction is selective, not exhaustive.
 - Canonical entity resolution within a space, source-level relationship provenance, and deletion cascades that preserve entities still supported by other documents.
 - Interactive Three.js graph with orbit/zoom, labels, entity search, type/confidence filters, camera reset, fullscreen, a keyboard-accessible entity list, and source inspection.
-- Graph-assisted full-text retrieval; true provider token streaming; cited answers; conversation persistence and deletion. An unfinished or uncited answer is never saved as a completed answer.
+- Graph-assisted full-text retrieval with ranked-term broadening for natural questions; true provider token streaming; cited answers; conversation persistence and deletion. An unfinished or uncited answer is never saved as a completed answer.
 - PageRank influence scores, Louvain community detection, and connected components computed from actual graph records.
 - Replayable server-sent events for live ingestion/graph updates, reconnects, expired-session handling, and periodic snapshot recovery.
 - Full graph JSON export, live worker health, configuration status, responsive layouts, loading/error/empty states, and reduced-motion support.

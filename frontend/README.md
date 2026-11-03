@@ -66,3 +66,5 @@ The deployment preflight fails clearly when the rewrite has not been configured.
 `src/cockpit.css` defines the navy/cyan/orange instruments, angular panels, responsive layouts and reduced-motion overrides. `public/fonts` contains licensed, self-hosted Latin WOFF2 fonts and their OFL notices. `src/live.tsx` owns one reconnectable event subscription per active space and merges durable history after the server cursor is established.
 
 The command-center radar uses actual graph records. Operations show worker checkpoints and retained events; tactical tools calculate paths on the visible filtered graph; Cmd/Ctrl+K opens entity/passage search. The comms research monitor renders measured request events, not simulated progress. Three.js remains lazy loaded and its rendering/layout resources are cleaned up when unmounted.
+
+If a browser tab outlives a deployment and its lazy bundle is no longer available, the module boundary offers an explicit reload notice. It does not silently reload while the operator is editing text.

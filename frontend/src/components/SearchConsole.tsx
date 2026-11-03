@@ -42,6 +42,7 @@ export default function SearchConsole({ onClose }: { onClose: () => void }) {
       <div className="console-input">
         <Search size={20} />
         <input
+          maxLength={500}
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}

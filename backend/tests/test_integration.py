@@ -205,3 +205,21 @@ async def test_operations_history_checkpoints_and_cursor_are_owner_scoped(client
             assert (await other.get(f"/api/spaces/{space}/{path}")).status_code == 404
         assert (await other.get(f"/api/spaces/{other_space}/operations")).json() == []
         assert (await other.get(f"/api/spaces/{other_space}/activity")).json() == []
+
+
+async def test_natural_question_retrieval_broadens_terms_without_inventing_context(client):
+    space = await register(client)
+    content = "Durable ingestion uses database leases and checkpoints to recover interrupted jobs."
+    doc = await enqueue(space, "Recovery protocol", content, "text")
+    await db.execute("UPDATE knowsphere.documents SET status='ready' WHERE id=%s", (doc["id"],))
+    await db.execute(
+        "INSERT INTO knowsphere.chunks(document_id,ordinal,content,processed) VALUES (%s,0,%s,true)",
+        (doc["id"], content),
+    )
+    r = await client.get(
+        f"/api/spaces/{space}/search",
+        params={"q": "How can a durable pipeline recover after a process stops?"},
+    )
+    assert r.status_code == 200 and r.json()[0]["content"] == content
+    assert (await client.get(f"/api/spaces/{space}/search?q=purple+astronomy")).json() == []
+    assert (await client.get(f"/api/spaces/{space}/search?q=the+and+or")).json() == []
