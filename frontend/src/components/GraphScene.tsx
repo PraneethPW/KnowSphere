@@ -140,8 +140,8 @@ function Scene({
               position={positions.get(node.id)}
               scale={
                 active
-                  ? 0.23
-                  : Math.min(0.2, 0.085 + Math.sqrt(node.degree) * 0.026)
+                  ? 0.36
+                  : Math.min(0.32, 0.14 + Math.sqrt(node.degree) * 0.04)
               }
               onClick={(event) => {
                 event.stopPropagation();
@@ -158,12 +158,11 @@ function Scene({
                 emissive={KIND_COLORS[node.kind] || "#38e8f2"}
                 emissiveIntensity={active || fresh.has(node.id) ? 2 : 0.4}
                 transparent
-                opacity={dim ? 0.23 : 1}
+                opacity={dim ? 0.36 : 1}
                 roughness={0.4}
               />
               {(active || (labels && i < 28 && !dim)) && (
                 <Html
-                  distanceFactor={15}
                   position={[0, 1.8, 0]}
                   center
                   style={{ pointerEvents: "none" }}

@@ -50,3 +50,7 @@ The cockpit release adds `OPENROUTER_EXTRACTION_MODEL=dots-studio/dots-3-note-pr
 Structured extraction sends the full required JSON Schema with strict mode and `provider.require_parameters=true`. Default extraction candidates support structured outputs and optional reasoning; reasoning is disabled to preserve the visible output budget. Required relationship confidence fields are never invented by the server.
 
 Answers use `OPENROUTER_REASONING=false` and the free-only `OPENROUTER_FALLBACKS` list (Xing 4, then Nemotron 3.5 Super VL). These controls prevent the default answer budget from being consumed entirely by reasoning before visible tokens are emitted. The actual answer model remains stored with every completed cited answer. `openrouter/free` is still supported as an explicit operator choice, with its routing variability.
+
+## Cockpit hosted acceptance
+
+The cockpit release completed its live two-passage ingestion, persisted checkpoint recovery, 21-entity/20-relationship graph, durable event replay and natural-question retrieval checks. A cited answer streamed 244 real provider token events and persisted its two citations through the Vercel → Railway → Neon path. See the final cockpit section of `VERIFICATION.md` for evidence and the provider fixes identified by live testing.

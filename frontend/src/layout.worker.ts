@@ -57,5 +57,16 @@ self.onmessage = (event: MessageEvent<LayoutInput>) => {
       positions[k] += velocities[k];
     }
   }
+  // Compress distant isolates so auto-fit keeps the connected core legible.
+  // Layout coordinates are visual positions, never graph distance measurements.
+  for (let i = 0; i < count; i++) {
+    const radius = Math.hypot(
+      positions[i * 3],
+      positions[i * 3 + 1],
+      positions[i * 3 + 2],
+    );
+    const gain = radius > 0 ? (3 * Math.log1p(radius)) / radius : 1;
+    for (let axis = 0; axis < 3; axis++) positions[i * 3 + axis] *= gain;
+  }
   self.postMessage({ ids, positions }, { transfer: [positions.buffer] });
 };
