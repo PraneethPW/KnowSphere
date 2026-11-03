@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Literal
 
@@ -42,8 +43,10 @@ entities: [{"name":string,"kind":"person|organization|concept|technology|locatio
 "description":string,"evidence":exact verbatim quote from the excerpt}].
 relationships: [{"source":exact entity name,"target":exact entity name,"label":short verb phrase,
 "evidence":exact verbatim quote supporting this connection,"confidence":number 0..1}].
-Use concise canonical entity names, at most 60 entities and 100 relationships. Source and target
-must both occur in entities. No self-links. Return empty arrays if the text has no supported facts."""
+Select the most informative explicitly stated facts. Return at most 16 entities and 20 relationships.
+Use concise canonical names, descriptions under 140 characters and verbatim evidence quotes under
+180 characters. Keep the entire JSON response compact. Source and target must both occur in entities.
+No self-links. Return empty arrays if the text has no supported facts."""
 
 
 async def completion(messages: list[dict], *, json_mode=False) -> tuple[str, str]:
@@ -59,7 +62,7 @@ async def completion(messages: list[dict], *, json_mode=False) -> tuple[str, str
     if json_mode:
         payload["response_format"] = {"type": "json_object"}
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(110, connect=10)) as client:
+        async with asyncio.timeout(120), httpx.AsyncClient(timeout=httpx.Timeout(110, connect=10)) as client:
             response = await client.post(
                 "https://openrouter.ai/api/v1/chat/completions",
                 headers={"Authorization": f"Bearer {config.openrouter_api_key}", "X-Title": "KnowSphere AI"},
@@ -82,7 +85,7 @@ async def completion(messages: list[dict], *, json_mode=False) -> tuple[str, str
         if not isinstance(text, str) or not text.strip() or choice.get("finish_reason") == "length":
             raise AIError("The AI returned an empty or incomplete response. Please retry.", True)
         return text, data.get("model", config.openrouter_model)
-    except (httpx.HTTPError, KeyError, ValueError, IndexError) as exc:
+    except (TimeoutError, httpx.HTTPError, KeyError, ValueError, IndexError) as exc:
         raise AIError("The AI provider is temporarily unavailable. Please retry.", True) from exc
 
 
