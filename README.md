@@ -1,6 +1,6 @@
 # KnowSphere AI
 
-An intelligent knowledge graph generation and discovery platform, built with real PostgreSQL persistence, OpenRouter inference, a durable ingestion worker, a 3D graph explorer, and source-grounded research conversations. New accounts and spaces start empty. There are no seed records, mock services, fabricated counters, or AI fallback answers.
+An intelligent knowledge graph generation and discovery platform, built with real PostgreSQL persistence, OpenRouter inference, a durable ingestion worker, a 3D graph explorer, and source-grounded research conversations. New accounts and spaces start empty. There are no seed records, mock services, fabricated counters, or fabricated fallback answers.
 
 **Live application:** <https://knowsphere-ai-praneethpw.vercel.app>. The API and worker run on Railway with Neon and OpenRouter. See [DEPLOYMENT.md](DEPLOYMENT.md) for live resources, automatic Git deployments and hosted verification.
 
