@@ -739,7 +739,9 @@ function ResearchMonitor({
       {trace.sources.length > 0 && (
         <button className="trace-sources" onClick={onSources}>
           <BookOpen size={15} />
-          {busy ? "Inspect retrieved passages" : "Inspect answer citations"}
+          {trace.stage === "saved"
+            ? "Inspect answer citations"
+            : "Inspect retrieved passages"}
           <ChevronRight size={14} />
         </button>
       )}
