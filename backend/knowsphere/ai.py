@@ -135,6 +135,9 @@ async def stream_answer(messages: list[dict]):
                 headers={"Authorization": f"Bearer {config.openrouter_api_key}", "X-Title": "KnowSphere AI"},
                 json={
                     "model": config.openrouter_model,
+                    "models": config.answer_fallbacks,
+                    "reasoning": {"enabled": config.openrouter_reasoning},
+                    "provider": {"require_parameters": True},
                     "messages": messages,
                     "stream": True,
                     "temperature": 0.1,

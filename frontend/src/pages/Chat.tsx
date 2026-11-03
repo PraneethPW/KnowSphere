@@ -414,8 +414,10 @@ export default function ChatPage() {
                   ))}
                 </div>
                 <small>
-                  <BookOpen size={13} /> Add and index a source before asking
-                  your first question.
+                  <BookOpen size={13} />{" "}
+                  {graph.data?.nodes.length
+                    ? `${graph.data.total_entities} entities connected to indexed source evidence.`
+                    : "Add and index a source before asking your first question."}
                 </small>
               </div>
             ) : (
@@ -717,7 +719,7 @@ function ResearchMonitor({
           <dt>ELAPSED</dt>
           <dd>
             {trace.started
-              ? `${((busy ? now - trace.started : trace.elapsed) / 1000).toFixed(1)}s`
+              ? `${(Math.max(0, busy ? now - trace.started : trace.elapsed) / 1000).toFixed(1)}s`
               : "—"}
           </dd>
         </div>

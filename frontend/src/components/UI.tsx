@@ -83,6 +83,7 @@ export function Modal({
     const dialog = ref.current!;
     const previous = document.activeElement as HTMLElement | null;
     dialog.showModal();
+    dialog.querySelector<HTMLElement>("[data-autofocus]")?.focus();
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {

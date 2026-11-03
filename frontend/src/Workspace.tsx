@@ -380,6 +380,7 @@ export default function Workspace({ user }: { user: User }) {
                     required
                     maxLength={80}
                     placeholder="e.g. Research notes"
+                    data-autofocus
                     autoFocus
                   />
                 </label>

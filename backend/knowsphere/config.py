@@ -10,7 +10,9 @@ class Settings(BaseSettings):
 
     database_url: str = ""
     openrouter_api_key: str = ""
-    openrouter_model: str = "openrouter/free"
+    openrouter_model: str = "dots-studio/dots-3-note-preview:free"
+    openrouter_reasoning: bool = False
+    openrouter_fallbacks: str = "xingchen-agi/xing4.0-29b-a4b:free,nvidia/nemotron-3.5-super-vl:free"
     openrouter_extraction_model: str = "dots-studio/dots-3-note-preview:free"
     openrouter_extraction_reasoning: bool = False
     openrouter_extraction_fallbacks: str = (
@@ -33,6 +35,10 @@ class Settings(BaseSettings):
         return [s.strip().rstrip("/") for s in self.allowed_origins.split(",") if s.strip()]
 
     @property
+    def answer_fallbacks(self) -> list[str]:
+        return list(dict.fromkeys(s.strip() for s in self.openrouter_fallbacks.split(",") if s.strip()))
+
+    @property
     def extraction_fallbacks(self) -> list[str]:
         return list(
             dict.fromkeys(s.strip() for s in self.openrouter_extraction_fallbacks.split(",") if s.strip())
@@ -46,9 +52,14 @@ class Settings(BaseSettings):
             tls = parse_qs(urlsplit(self.database_url).query).get("sslmode", [""])[0]
             if not self.database_url or tls not in {"require", "verify-ca", "verify-full"}:
                 raise ValueError("Production requires a TLS PostgreSQL connection string")
-        if len(self.extraction_fallbacks) > 3:
-            raise ValueError("At most three extraction fallbacks are allowed")
-        for model in (self.openrouter_model, self.openrouter_extraction_model, *self.extraction_fallbacks):
+        if max(len(self.extraction_fallbacks), len(self.answer_fallbacks)) > 3:
+            raise ValueError("At most three fallbacks are allowed per request")
+        for model in (
+            self.openrouter_model,
+            self.openrouter_extraction_model,
+            *self.extraction_fallbacks,
+            *self.answer_fallbacks,
+        ):
             if model != "openrouter/free" and not model.endswith(":free"):
                 raise ValueError("Only OpenRouter free model IDs are allowed")
         return self

@@ -52,6 +52,8 @@ def test_free_models_and_production_tls_are_enforced():
         Settings(_env_file=None, openrouter_extraction_model="provider/paid-model")
     with pytest.raises(ValidationError, match="free model"):
         Settings(_env_file=None, openrouter_extraction_fallbacks="provider/paid-model")
+    with pytest.raises(ValidationError, match="free model"):
+        Settings(_env_file=None, openrouter_fallbacks="provider/paid-model")
     with pytest.raises(ValidationError, match="secure cookies"):
         Settings(_env_file=None, app_env="production")
     with pytest.raises(ValidationError, match="TLS PostgreSQL"):

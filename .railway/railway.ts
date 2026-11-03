@@ -4,7 +4,9 @@ import { defineRailway, github, preserve, project, service } from "railway/iac";
 const env = {
   DATABASE_URL: preserve(),
   OPENROUTER_API_KEY: preserve(),
-  OPENROUTER_MODEL: "openrouter/free",
+  OPENROUTER_MODEL: "dots-studio/dots-3-note-preview:free",
+  OPENROUTER_REASONING: "false",
+  OPENROUTER_FALLBACKS: "xingchen-agi/xing4.0-29b-a4b:free,nvidia/nemotron-3.5-super-vl:free",
   OPENROUTER_EXTRACTION_MODEL: "dots-studio/dots-3-note-preview:free",
   OPENROUTER_EXTRACTION_REASONING: "false",
   OPENROUTER_EXTRACTION_FALLBACKS: "xingchen-agi/xing4.0-29b-a4b:free,nvidia/nemotron-3.5-super-vl:free",

@@ -43,6 +43,7 @@ export default function SearchConsole({ onClose }: { onClose: () => void }) {
         <Search size={20} />
         <input
           maxLength={500}
+          data-autofocus
           autoFocus
           value={input}
           onChange={(e) => setInput(e.target.value)}

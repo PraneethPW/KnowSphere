@@ -35,7 +35,9 @@ Development API documentation: <http://127.0.0.1:8000/api/docs>. Production disa
 | `OPENROUTER_API_KEY` | Backend-only OpenRouter credential |
 | `OPENROUTER_EXTRACTION_FALLBACKS` | Comma-separated free model IDs tried by OpenRouter on provider errors; default Xing 4, then Nemotron 3.5 Super VL. Set empty to disable. Paid IDs are rejected. |
 | `OPENROUTER_EXTRACTION_MODEL` | `dots-studio/dots-3-note-preview:free` by default for compact structured extraction; configure another free ID if availability changes |
-| `OPENROUTER_MODEL` | `openrouter/free` or a model ending in `:free`; paid IDs are rejected |
+| `OPENROUTER_MODEL` | Dots 3 Note `:free` by default for answers; another `:free` ID or `openrouter/free` can be configured |
+| `OPENROUTER_FALLBACKS` | Free-only answer failover list; defaults to Xing 4, then Nemotron 3.5 Super VL |
+| `OPENROUTER_REASONING` | `false` by default to preserve the answer output budget; enable for a deliberately selected compatible reasoning model |
 | `APP_ENV` | `development` locally; `production` for Railway |
 | `ALLOWED_ORIGINS` | Comma-separated exact frontend origins; production requires HTTPS |
 | `COOKIE_SECURE` | `false` only for local HTTP; `true` in production |

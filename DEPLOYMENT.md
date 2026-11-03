@@ -24,7 +24,7 @@ The application, API and ingestion worker are deployed. Neon and OpenRouter secr
 
 `APP_ENV=production`, `COOKIE_SECURE=true`, and `ALLOWED_ORIGINS=https://knowsphere-ai-praneethpw.vercel.app` are configured on Railway. The frontend's checked-in `vercel.json` proxies `/api` to the actual Railway origin and never caches authenticated API responses. Secure HttpOnly cookies stay first-party.
 
-The OpenRouter model remains `openrouter/free`. Free-model quotas and availability apply. A configured key is not an uptime guarantee; failed inference is surfaced to the user and retried by the durable job worker where appropriate.
+Answer and extraction models use the explicit free-model configurations below. Free-model quotas and availability apply. A configured key is not an uptime guarantee; failed inference is surfaced to the user and retried by the durable job worker where appropriate.
 
 ## Verified hosted flow
 
@@ -43,8 +43,10 @@ See `VERIFICATION.md` for checks and limits. The functional checks do not substi
 
 ## Extraction model configuration
 
-The cockpit release adds `OPENROUTER_EXTRACTION_MODEL=dots-studio/dots-3-note-preview:free` on the API and worker. `OPENROUTER_MODEL=openrouter/free` continues to route research answers. Both settings reject paid IDs. The extraction prompt selects up to 16 entities and 20 relationships per passage, with short quotes and a 120-second total provider deadline. This avoids oversized graphs and separates structured extraction from reasoning-heavy answer routing. Free provider availability can still require retries or a different free model ID.
+The cockpit release adds `OPENROUTER_EXTRACTION_MODEL=dots-studio/dots-3-note-preview:free` on the API and worker. `OPENROUTER_MODEL=dots-studio/dots-3-note-preview:free` routes research answers. Both settings reject paid IDs. The extraction prompt selects up to 16 entities and 20 relationships per passage, with short quotes and a 120-second total provider deadline. This avoids oversized graphs and separates structured extraction from reasoning-heavy answer routing. Free provider availability can still require retries or a different free model ID.
 
 `OPENROUTER_EXTRACTION_FALLBACKS` supplies an ordered, free-only failover list for upstream quota/availability errors. Defaults: `xingchen-agi/xing4.0-29b-a4b:free,nvidia/nemotron-3.5-super-vl:free`. The actual responding model is recorded on each committed checkpoint event. All extracted quotes still pass the same source check. Model failover never supplies fabricated data.
 
 Structured extraction sends the full required JSON Schema with strict mode and `provider.require_parameters=true`. Default extraction candidates support structured outputs and optional reasoning; reasoning is disabled to preserve the visible output budget. Required relationship confidence fields are never invented by the server.
+
+Answers use `OPENROUTER_REASONING=false` and the free-only `OPENROUTER_FALLBACKS` list (Xing 4, then Nemotron 3.5 Super VL). These controls prevent the default answer budget from being consumed entirely by reasoning before visible tokens are emitted. The actual answer model remains stored with every completed cited answer. `openrouter/free` is still supported as an explicit operator choice, with its routing variability.
