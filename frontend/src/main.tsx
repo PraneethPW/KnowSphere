@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "framer-motion";
 import App from "./App";
 import "./styles.css";
+import "./cockpit.css";
 
 const client = new QueryClient({
   defaultOptions: {

@@ -3,6 +3,8 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowDownToLine,
+  Crosshair,
+  Route as RouteIcon,
   ArrowUpRight,
   Box,
   Eye,
@@ -30,6 +32,7 @@ import {
 } from "../components/UI";
 import { VisualBoundary } from "../Landing";
 import { useWorkspace } from "../Workspace";
+import { shortestPath } from "../graph-tools";
 import { useGraph } from "./Dashboard";
 
 const GraphScene = lazy(() => import("../components/GraphScene"));
@@ -66,6 +69,12 @@ function EntityInspector({ id, onClose }: { id: string; onClose: () => void }) {
               {query.data.kind}
             </span>
             <h2>{query.data.name}</h2>
+            <Link
+              className="button button-primary inspector-ask"
+              to={`/app/chat?question=${encodeURIComponent(`What do my sources say about ${query.data.name}?`)}`}
+            >
+              Research this entity <ArrowUpRight size={14} />
+            </Link>
             <p className="entity-description">
               {query.data.sources[0]?.description}
             </p>
@@ -133,7 +142,37 @@ export default function GraphPage() {
     [view, setView] = useState<"3d" | "list">("3d"),
     [reset, setReset] = useState(0),
     [fullscreen, setFullscreen] = useState(false);
+  const [community, setCommunity] = useState("all"),
+    [isolate, setIsolate] = useState(false);
+  const [tracing, setTracing] = useState(false),
+    [pathFrom, setPathFrom] = useState(""),
+    [pathTo, setPathTo] = useState("");
   const selected = params.get("entity") || "";
+  const [fresh, setFresh] = useState<Set<string>>(new Set());
+  const known = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!graph.data) return;
+    const next = new Set(graph.data.nodes.map((n) => n.id));
+    if (known.current)
+      setFresh(new Set([...next].filter((id) => !known.current!.has(id))));
+    known.current = next;
+    const timer = setTimeout(() => setFresh(new Set()), 12_000);
+    return () => clearTimeout(timer);
+  }, [graph.data]);
+  const neighbors = useMemo(
+    () =>
+      new Set([
+        selected,
+        ...(graph.data?.links || [])
+          .filter(
+            (l) =>
+              l.confidence >= confidence &&
+              (l.source === selected || l.target === selected),
+          )
+          .flatMap((l) => [l.source, l.target]),
+      ]),
+    [selected, graph.data, confidence],
+  );
   useEffect(() => {
     const update = () => setFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", update);
@@ -145,9 +184,11 @@ export default function GraphPage() {
       graph.data?.nodes.filter(
         (n) =>
           (kind === "all" || n.kind === kind) &&
+          (community === "all" || n.community === Number(community)) &&
+          (!isolate || !selected || neighbors.has(n.id)) &&
           n.name.toLowerCase().includes(search.toLowerCase()),
       ) || [],
-    [graph.data, kind, search],
+    [graph.data, kind, search, community, isolate, selected, neighbors],
   );
   const links = useMemo(() => {
     const ids = new Set(nodes.map((n) => n.id));
@@ -158,6 +199,21 @@ export default function GraphPage() {
       ) || []
     );
   }, [graph.data, nodes, confidence]);
+  const path = useMemo(
+    () => shortestPath(links, pathFrom, pathTo),
+    [links, pathFrom, pathTo],
+  );
+  const pathEdges = path
+    .slice(1)
+    .map((id, i) =>
+      links.find(
+        (l) =>
+          (l.source === path[i] && l.target === id) ||
+          (l.target === path[i] && l.source === id),
+      )!,
+    );
+  const name = (id: string) =>
+    graph.data?.nodes.find((n) => n.id === id)?.name || id;
   async function exportGraph() {
     try {
       await downloadGraph(space.id);
@@ -184,7 +240,7 @@ export default function GraphPage() {
       {nodes.map((n) => (
         <button
           key={n.id}
-          className={`entity-list-card ${selected === n.id ? "active" : ""}`}
+          className={`entity-list-card ${selected === n.id ? "active" : ""} ${fresh.has(n.id) ? "fresh-node" : ""}`}
           onClick={() => setSelected(n.id)}
         >
           <span>
@@ -202,9 +258,9 @@ export default function GraphPage() {
   return (
     <>
       <SectionHeading
-        eyebrow="A UNIVERSE OF CONNECTED IDEAS"
-        title="Follow your curiosity."
-        description="Move through your knowledge. Select an entity to trace the evidence behind it."
+        eyebrow="TACTICAL / CONNECTION INTELLIGENCE"
+        title="Tactical graph"
+        description="Investigate neighborhoods, trace connection paths, and inspect the source behind every relationship."
         action={
           <button
             className="button button-secondary"
@@ -237,6 +293,23 @@ export default function GraphPage() {
           </div>
           <div className="graph-tool-actions">
             <button
+              className={`tool-button ${tracing ? "active" : ""}`}
+              onClick={() => setTracing(!tracing)}
+              aria-expanded={tracing}
+            >
+              <RouteIcon size={15} />
+              <span>Trace path</span>
+            </button>
+            <button
+              className={`tool-button ${isolate ? "active" : ""}`}
+              disabled={!selected}
+              onClick={() => setIsolate(!isolate)}
+              aria-pressed={isolate}
+            >
+              <Crosshair size={15} />
+              <span>Isolate</span>
+            </button>
+            <button
               className={`tool-button ${filters ? "active" : ""}`}
               onClick={() => setFilters(!filters)}
               aria-expanded={filters}
@@ -264,6 +337,90 @@ export default function GraphPage() {
             </div>
           </div>
         </div>
+        {fresh.size > 0 && (
+          <div className="graph-live-update" role="status">
+            <span className="live-dot" />
+            {fresh.size} new entities published from your sources
+          </div>
+        )}
+        {tracing && (
+          <div className="path-console">
+            <div className="path-selectors">
+              <label>
+                FROM
+                <select
+                  value={pathFrom}
+                  onChange={(e) => setPathFrom(e.target.value)}
+                >
+                  <option value="">Select entity</option>
+                  {nodes.map((n) => (
+                    <option key={n.id} value={n.id}>
+                      {n.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <RouteIcon size={20} />
+              <label>
+                TO
+                <select
+                  value={pathTo}
+                  onChange={(e) => setPathTo(e.target.value)}
+                >
+                  <option value="">Select entity</option>
+                  {nodes.map((n) => (
+                    <option key={n.id} value={n.id}>
+                      {n.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span className="tiny-tag">UNDIRECTED / VISIBLE GRAPH</span>
+            </div>
+            {pathFrom && pathTo && (
+              <div className="path-result">
+                {path.length ? (
+                  <>
+                    <div className="path-chain">
+                      {path.map((id, i) => (
+                        <span key={id}>
+                          {i > 0 && <ArrowUpRight size={13} />}
+                          <button onClick={() => setSelected(id)}>
+                            {name(id)}
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    {pathEdges.length > 0 && (
+                      <div className="path-evidence">
+                        {pathEdges.map((l) => (
+                          <div key={l.id}>
+                            <strong>
+                              {name(l.source)} → {l.label} → {name(l.target)}
+                            </strong>
+                            <p>“{l.evidence}”</p>
+                            <Link to={`/app/library?document=${l.document_id}`}>
+                              {l.title} <ArrowUpRight size={12} />
+                            </Link>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <small>
+                      {path.length - 1} hops. Connection paths show extracted
+                      relationships; they do not establish causation.
+                    </small>
+                  </>
+                ) : (
+                  <p>
+                    No path in the current filters. Broaden the filters or
+                    choose another pair.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {filters && (
           <div className="graph-filters">
             <label>
@@ -275,6 +432,22 @@ export default function GraphPage() {
                     {k}
                   </option>
                 ))}
+              </select>
+            </label>
+            <label>
+              Community
+              <select
+                value={community}
+                onChange={(e) => setCommunity(e.target.value)}
+              >
+                <option value="all">All communities</option>
+                {[...new Set(graph.data?.nodes.map((n) => n.community))]
+                  .sort((a, b) => a - b)
+                  .map((c) => (
+                    <option key={c} value={c}>
+                      Community {c + 1}
+                    </option>
+                  ))}
               </select>
             </label>
             <label>
@@ -293,6 +466,8 @@ export default function GraphPage() {
               className="text-link"
               onClick={() => {
                 setKind("all");
+                setCommunity("all");
+                setIsolate(false);
                 setConfidence(0);
                 setSearch("");
               }}
@@ -350,6 +525,8 @@ export default function GraphPage() {
                         onSelect={setSelected}
                         labels={labels}
                         reset={reset}
+                        fresh={fresh}
+                        path={tracing ? path : []}
                       />
                     </Suspense>
                   </VisualBoundary>

@@ -41,6 +41,18 @@ The two application source folders are `frontend` and `backend` (the spelling is
 - Replayable server-sent events for live ingestion/graph updates, reconnects, expired-session handling, and periodic snapshot recovery.
 - Full graph JSON export, live worker health, configuration status, responsive layouts, loading/error/empty states, and reduced-motion support.
 
+## Cockpit release: live investigation tools
+
+The interface uses a navy/cyan/orange cockpit theme from landing and operator access to research and system control. Fonts are self-hosted; the procedural Three.js reactor is decorative artwork. The command-center radar is built from the authenticated space's actual graph.
+
+- **Live operations** (`/app/operations`): durable job checkpoints, processed/total passages, evidenced mentions and relationship counts, failures and retry countdowns. The mission log supports event filters, display pause/resume, cursor-paginated history and source/conversation navigation. History retains seven days.
+- **Visible uplink**: server heartbeat receipt, worker health, connection recovery and received-event count. Changes propagate across tabs without refreshing. Events poll PostgreSQL every two seconds; free AI requests can take longer or be rate limited.
+- **Tactical graph**: type, community and confidence filters; isolate the selected entity's immediate neighbors; compute a shortest undirected connection chain in the filtered visible graph and inspect its relationship quotes. New entities glow for 12 seconds after publication. A path indicates extracted connections, not causation.
+- **Search console**: click the header search or press Cmd/Ctrl+K. Search actual entities and indexed passages, then jump to their original source.
+- **Intelligence comms**: entity-to-question navigation, real retrieval/generation/validation/save stages, elapsed time, source-document/passages counts and provider stream-event counts. Retrieved passages are inspectable during generation. Timings describe the current run and are not stored as historical metrics.
+
+Upload a document through **Launch ingestion**, open **Live operations** in a second tab, then inspect the published entities in **Tactical graph** and ask a source-grounded question in **Intelligence comms**. The graph publishes a source only after its full ingestion completes; partial checkpoints remain telemetry until then.
+
 ## Stack and architecture
 
 | Layer | Implementation |
@@ -67,7 +79,7 @@ flowchart LR
     A -->|SSE: progress and tokens| U
 ```
 
-No paper was supplied. This is an independently implemented graph-assisted retrieval architecture, not a claimed reproduction of a specific research paper. No model training, vector embeddings, semantic similarity engine, or OCR is asserted. Graph algorithms supply useful discovery without an extra model service. The decorative landing-page sphere is procedural artwork, not a preview of stored knowledge.
+No paper was supplied. This is an independently implemented graph-assisted retrieval architecture, not a claimed reproduction of a specific research paper. No model training, vector embeddings, semantic similarity engine, or OCR is asserted. Graph algorithms supply useful discovery without an extra model service. The decorative landing-page reactor is procedural artwork, not a preview of stored knowledge.
 
 ## Project location and Git
 

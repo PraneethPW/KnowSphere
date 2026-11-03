@@ -4,6 +4,8 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUp,
+  Activity,
+  Radio,
   BookOpen,
   Check,
   ChevronRight,
@@ -29,6 +31,7 @@ import {
   useToast,
 } from "../components/UI";
 import { useWorkspace } from "../Workspace";
+import { useClock } from "../components/Telemetry";
 import { useGraph } from "./Dashboard";
 
 export default function ChatPage() {
@@ -38,13 +41,22 @@ export default function ChatPage() {
   const [params, setParams] = useSearchParams(),
     conversationId = params.get("conversation");
   const [messages, setMessages] = useState<Message[]>([]),
-    [input, setInput] = useState(""),
+    [input, setInput] = useState(params.get("question") || ""),
     [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null),
     [historyOpen, setHistoryOpen] = useState(false),
     [citations, setCitations] = useState<Citation[] | null>(null),
     [removing, setRemoving] = useState<Conversation | null>(null),
     [deleteBusy, setDeleteBusy] = useState(false);
+  const [trace, setTrace] = useState<ResearchTrace>({
+    stage: "idle",
+    started: 0,
+    tokens: 0,
+    passages: 0,
+    documents: 0,
+    elapsed: 0,
+    sources: [],
+  });
   const controller = useRef<AbortController | null>(null),
     nearBottom = useRef(true),
     scrolling = useRef<HTMLDivElement>(null),
@@ -91,6 +103,15 @@ export default function ChatPage() {
     const message = input.trim();
     if (!message || busy) return;
     setInput("");
+    setTrace({
+      stage: "retrieving",
+      started: Date.now(),
+      tokens: 0,
+      passages: 0,
+      documents: 0,
+      elapsed: 0,
+      sources: [],
+    });
     setBusy(true);
     streaming.current = true;
     setError(null);
@@ -116,7 +137,24 @@ export default function ChatPage() {
         { message, conversation_id: conversationId },
         abort.signal,
         (eventName, data) => {
+          if (eventName === "stage")
+            setTrace((previous) => ({
+              ...previous,
+              stage: String(data.stage),
+              passages:
+                data.passages !== undefined
+                  ? Number(data.passages)
+                  : previous.passages,
+              documents:
+                data.documents !== undefined
+                  ? Number(data.documents)
+                  : previous.documents,
+            }));
           if (eventName === "context") {
+            setTrace((previous) => ({
+              ...previous,
+              sources: data.citations as Citation[],
+            }));
             activeId = String(data.conversation_id);
             if (!conversationId)
               setParams({ conversation: activeId }, { replace: true });
@@ -128,7 +166,12 @@ export default function ChatPage() {
               ),
             );
           }
-          if (eventName === "token")
+          if (eventName === "token") {
+            setTrace((previous) => ({
+              ...previous,
+              stage: "generating",
+              tokens: previous.tokens + 1,
+            }));
             setMessages((previous) =>
               previous.map((m) =>
                 m.id === assistantId
@@ -136,7 +179,14 @@ export default function ChatPage() {
                   : m,
               ),
             );
+          }
           if (eventName === "done") {
+            setTrace((previous) => ({
+              ...previous,
+              stage: "saved",
+              elapsed: Number(data.elapsed_ms),
+              sources: data.citations as Citation[],
+            }));
             completed = true;
             setMessages((previous) =>
               previous.map((m) =>
@@ -153,6 +203,11 @@ export default function ChatPage() {
         },
       );
     } catch (e) {
+      setTrace((previous) => ({
+        ...previous,
+        stage: "failed",
+        elapsed: Date.now() - previous.started,
+      }));
       setMessages((previous) =>
         previous.map((m) =>
           m.id === assistantId ? { ...m, failed: true } : m,
@@ -187,6 +242,15 @@ export default function ChatPage() {
     setError(null);
     setInput("");
     setHistoryOpen(false);
+    setTrace({
+      stage: "idle",
+      started: 0,
+      tokens: 0,
+      passages: 0,
+      documents: 0,
+      elapsed: 0,
+      sources: [],
+    });
   }
   function selectConversation(id: string) {
     if (busy) return;
@@ -194,6 +258,15 @@ export default function ChatPage() {
     setParams({ conversation: id });
     setError(null);
     setHistoryOpen(false);
+    setTrace({
+      stage: "idle",
+      started: 0,
+      tokens: 0,
+      passages: 0,
+      documents: 0,
+      elapsed: 0,
+      sources: [],
+    });
     void client.invalidateQueries({ queryKey: ["thread", space.id, id] });
   }
   async function removeConversation() {
@@ -226,9 +299,9 @@ export default function ChatPage() {
   return (
     <>
       <SectionHeading
-        eyebrow="FOLLOW A BETTER QUESTION"
-        title="Ask your knowledge."
-        description="Connected context. Clear answers. Sources you can follow."
+        eyebrow="COMMS / SOURCE INTELLIGENCE"
+        title="Intelligence comms"
+        description="Query your sources. Follow the live research trace. Verify the evidence."
         action={
           <div className="heading-actions">
             <button
@@ -298,7 +371,7 @@ export default function ChatPage() {
         <div className="chat-area">
           <div className="chat-topline">
             <span>
-              <Sparkles size={15} /> KNOWSPHERE RESEARCH ASSISTANT
+              <Sparkles size={15} /> KNOWSPHERE / RESEARCH CHANNEL
             </span>
             <span>
               <Check size={12} /> SOURCE-GROUNDED
@@ -326,10 +399,8 @@ export default function ChatPage() {
                 <div className="chat-welcome-icon">
                   <Sparkles size={28} />
                 </div>
-                <span className="eyebrow">
-                  EVERY QUESTION IS A NEW CONNECTION.
-                </span>
-                <h2>What are you curious about?</h2>
+                <span className="eyebrow">CHANNEL OPEN / AWAITING QUERY</span>
+                <h2>Request intelligence.</h2>
                 <p>
                   Ask about the ideas, people, and connections in your indexed
                   sources. I’ll bring the relevant passages together.
@@ -490,6 +561,11 @@ export default function ChatPage() {
             </p>
           </div>
         </div>
+        <ResearchMonitor
+          trace={trace}
+          busy={busy}
+          onSources={() => setCitations(trace.sources)}
+        />
       </section>
       {citations && (
         <Modal
@@ -568,5 +644,107 @@ function GitBranchIcon() {
       <circle cx="4" cy="13" r="2" />
       <path d="M4 5v6m0-3c5 0 8 1 8-1" />
     </svg>
+  );
+}
+
+type ResearchTrace = {
+  stage: string;
+  started: number;
+  tokens: number;
+  passages: number;
+  documents: number;
+  elapsed: number;
+  sources: Citation[];
+};
+function ResearchMonitor({
+  trace,
+  busy,
+  onSources,
+}: {
+  trace: ResearchTrace;
+  busy: boolean;
+  onSources: () => void;
+}) {
+  const now = useClock();
+  const stages = [
+    "retrieving",
+    "retrieved",
+    "generating",
+    "validating",
+    "saved",
+  ];
+  const current = stages.indexOf(trace.stage);
+  return (
+    <aside className="research-monitor">
+      <div className="eyebrow">
+        <Radio size={13} /> RESEARCH TRACE
+      </div>
+      <h3>
+        {trace.stage === "idle"
+          ? "Awaiting query"
+          : trace.stage === "failed"
+            ? "Run interrupted"
+            : trace.stage === "saved"
+              ? "Answer committed"
+              : "Research in progress"}
+      </h3>
+      <div className="research-stages">
+        {[
+          ["retrieving", "Retrieve indexed context"],
+          ["retrieved", "Attach source passages"],
+          ["generating", "Stream model response"],
+          ["validating", "Validate citation references"],
+          ["saved", "Persist cited answer"],
+        ].map(([stage, label], i) => (
+          <div
+            key={stage}
+            className={`${current > i || trace.stage === "saved" ? "done" : ""} ${trace.stage === stage ? "current" : ""}`}
+          >
+            <span>
+              {current > i || trace.stage === "saved" ? (
+                <Check size={11} />
+              ) : (
+                String(i + 1).padStart(2, "0")
+              )}
+            </span>
+            {label}
+            {trace.stage === stage && busy && <Activity size={12} />}
+          </div>
+        ))}
+      </div>
+      <dl className="trace-metrics">
+        <div>
+          <dt>ELAPSED</dt>
+          <dd>
+            {trace.started
+              ? `${((busy ? now - trace.started : trace.elapsed) / 1000).toFixed(1)}s`
+              : "—"}
+          </dd>
+        </div>
+        <div>
+          <dt>PASSAGES</dt>
+          <dd>{trace.passages}</dd>
+        </div>
+        <div>
+          <dt>SOURCE DOCS</dt>
+          <dd>{trace.documents}</dd>
+        </div>
+        <div>
+          <dt>STREAM EVENTS</dt>
+          <dd>{trace.tokens}</dd>
+        </div>
+      </dl>
+      {trace.sources.length > 0 && (
+        <button className="trace-sources" onClick={onSources}>
+          <BookOpen size={15} />
+          {busy ? "Inspect retrieved passages" : "Inspect answer citations"}
+          <ChevronRight size={14} />
+        </button>
+      )}
+      <p className="small-print">
+        Trace reflects the current run. Timing and stream events are measured
+        from this request. Model rate limits can delay the first token.
+      </p>
+    </aside>
   );
 }

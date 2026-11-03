@@ -15,6 +15,8 @@ function Scene({
   positions,
   labels,
   reset,
+  fresh,
+  path,
 }: {
   nodes: GraphNode[];
   links: GraphLink[];
@@ -23,6 +25,8 @@ function Scene({
   positions: Map<string, [number, number, number]>;
   labels: boolean;
   reset: number;
+  fresh: Set<string>;
+  path: string[];
 }) {
   const [hovered, setHovered] = useState(""),
     group = useRef<THREE.Group>(null),
@@ -70,22 +74,30 @@ function Scene({
     () =>
       new Set(
         links
-          .filter((l) => l.source === selected || l.target === selected)
+          .filter(
+            (l) =>
+              l.source === selected ||
+              l.target === selected ||
+              (path.includes(l.source) && path.includes(l.target)),
+          )
           .flatMap((l) => [l.source, l.target]),
       ),
-    [selected, links],
+    [selected, links, path],
   );
   const activePositions = useMemo(() => {
     const values: number[] = [];
     for (const link of links.filter(
-      (l) => l.source === selected || l.target === selected,
+      (l) =>
+        l.source === selected ||
+        l.target === selected ||
+        (path.includes(l.source) && path.includes(l.target)),
     )) {
       const a = positions.get(link.source),
         b = positions.get(link.target);
       if (a && b) values.push(...a, ...b);
     }
     return new Float32Array(values);
-  }, [links, positions, selected]);
+  }, [links, positions, selected, path]);
   return (
     <>
       <ambientLight intensity={1} />
@@ -99,12 +111,12 @@ function Scene({
             />
           </bufferGeometry>
           <lineBasicMaterial
-            color="#8ca38a"
+            color="#26758d"
             transparent
             opacity={selected ? 0.1 : 0.27}
           />
         </lineSegments>
-        {selected && (
+        {(selected || path.length > 0) && (
           <lineSegments>
             <bufferGeometry>
               <bufferAttribute
@@ -112,11 +124,14 @@ function Scene({
                 args={[activePositions, 3]}
               />
             </bufferGeometry>
-            <lineBasicMaterial color="#d9f99d" transparent opacity={0.8} />
+            <lineBasicMaterial color="#38e8f2" transparent opacity={0.8} />
           </lineSegments>
         )}
         {nodes.map((node, i) => {
-          const active = node.id === selected || node.id === hovered,
+          const active =
+              node.id === selected ||
+              node.id === hovered ||
+              path.includes(node.id),
             dim = selected && !highlighted.has(node.id) && node.id !== selected;
           return (
             <mesh
@@ -139,9 +154,9 @@ function Scene({
               onPointerOut={() => setHovered("")}
             >
               <meshStandardMaterial
-                color={KIND_COLORS[node.kind] || "#d9f99d"}
-                emissive={KIND_COLORS[node.kind] || "#d9f99d"}
-                emissiveIntensity={active ? 1.5 : 0.4}
+                color={KIND_COLORS[node.kind] || "#38e8f2"}
+                emissive={KIND_COLORS[node.kind] || "#38e8f2"}
+                emissiveIntensity={active || fresh.has(node.id) ? 2 : 0.4}
                 transparent
                 opacity={dim ? 0.23 : 1}
                 roughness={0.4}
@@ -182,6 +197,8 @@ export default function GraphScene(props: {
   onSelect: (id: string) => void;
   labels: boolean;
   reset: number;
+  fresh: Set<string>;
+  path: string[];
 }) {
   const [positions, setPositions] = useState<
     Map<string, [number, number, number]>
@@ -223,7 +240,7 @@ export default function GraphScene(props: {
         gl={{ antialias: true }}
         onPointerMissed={() => props.onSelect("")}
       >
-        <color attach="background" args={["#0d1117"]} />
+        <color attach="background" args={["#070f1d"]} />
         {positions.size > 0 && <Scene {...props} positions={positions} />}
       </Canvas>
       {positions.size === 0 && (

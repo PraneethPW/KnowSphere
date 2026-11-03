@@ -67,3 +67,11 @@ Project: `/Users/praneethreddy/Freelance Projects /KnowSphere-AI` (the existing 
 Local frontend: <http://127.0.0.1:5173>. Local API readiness: <http://127.0.0.1:8000/api/health/ready>. These are separate from the public production URLs above.
 
 Separate setup, operation and deployment guides are in `frontend/README.md` and `backend/README.md`. Git is connected to the user-supplied repository `PraneethPW/KnowSphere` on `main`.
+
+## Cockpit release — implementation verification
+
+The second interface release replaces the original palette/layout with a navy, cyan and signal-orange cockpit. It adds a command-center radar using real graph records, an operations console with durable chunk telemetry and retained activity, named event heartbeats, source/entity search, neighborhood isolation, community filtering, shortest visible graph paths with source evidence, and a measured chat research trace.
+
+Local checks: 15 backend tests passed against a newly initialized disposable local `knowsphere_test` database; 5 frontend tests passed; TypeScript and production Vite build passed; Ruff checks/format passed. New integration coverage checks telemetry counts, event cursor pagination, bounded limits and cross-owner denial. New graph tests cover shortest paths, parallel relations, cycles, disconnected endpoints and empty input.
+
+Browser inspection confirmed the new landing reactor, operator login, a genuinely empty command center, a connected heartbeat/worker monitor and phone-width operations without horizontal overflow. Hosted feature verification follows deployment and is recorded separately below.

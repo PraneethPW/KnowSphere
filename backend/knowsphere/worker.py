@@ -112,7 +112,17 @@ async def save_extraction(job, chunk, graph: ai.Extraction):
             "UPDATE knowsphere.documents SET progress=%s,updated_at=now() WHERE id=%s", (progress, job["id"])
         )
         await emit(
-            conn, job["space_id"], "document.updated", {"document_id": str(job["id"]), "progress": progress}
+            conn,
+            job["space_id"],
+            "document.updated",
+            {
+                "document_id": str(job["id"]),
+                "title": job["title"],
+                "stage": "checkpoint",
+                "progress": progress,
+                "chunks_done": row["done"],
+                "chunks_total": row["total"],
+            },
         )
 
 
@@ -126,7 +136,15 @@ async def process(job):
                 (job["id"], ordinal, content),
             )
         await emit(
-            conn, job["space_id"], "document.updated", {"document_id": str(job["id"]), "status": "processing"}
+            conn,
+            job["space_id"],
+            "document.updated",
+            {
+                "document_id": str(job["id"]),
+                "title": job["title"],
+                "status": "processing",
+                "stage": "chunking",
+            },
         )
     chunks = await db.fetch(
         "SELECT * FROM knowsphere.chunks WHERE document_id=%s AND NOT processed ORDER BY ordinal",
@@ -135,6 +153,17 @@ async def process(job):
     for chunk in chunks:
         async with db.database().connection() as conn, conn.transaction():
             await check_lease(conn, job)
+            await emit(
+                conn,
+                job["space_id"],
+                "document.updated",
+                {
+                    "document_id": str(job["id"]),
+                    "title": job["title"],
+                    "stage": "extracting",
+                    "chunk": chunk["ordinal"] + 1,
+                },
+            )
         graph = await ai.extract(chunk["content"])
         await save_extraction(job, chunk, graph)
     async with db.database().connection() as conn, conn.transaction():
@@ -144,7 +173,12 @@ async def process(job):
             lease_token=NULL,lease_until=NULL,updated_at=now() WHERE id=%s""",
             (job["id"],),
         )
-        await emit(conn, job["space_id"], "graph.updated", {"document_id": str(job["id"]), "status": "ready"})
+        await emit(
+            conn,
+            job["space_id"],
+            "graph.updated",
+            {"document_id": str(job["id"]), "title": job["title"], "status": "ready", "stage": "published"},
+        )
 
 
 async def fail(job, exc):
@@ -163,7 +197,15 @@ async def fail(job, exc):
             ("queued" if retry else "failed", error, delay, job["id"]),
         )
         await emit(
-            conn, job["space_id"], "document.updated", {"document_id": str(job["id"]), "retrying": retry}
+            conn,
+            job["space_id"],
+            "document.updated",
+            {
+                "document_id": str(job["id"]),
+                "title": job["title"],
+                "retrying": retry,
+                "status": "queued" if retry else "failed",
+            },
         )
 
 

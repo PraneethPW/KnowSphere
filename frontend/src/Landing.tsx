@@ -43,10 +43,9 @@ export default function Landing() {
     target: hero,
     offset: ["start start", "end start"],
   });
-  const y = useTransform(scrollYProgress, [0, 1], [0, 130]);
-  const rotate = useTransform(scrollYProgress, [0, 1], [0, 14]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, 90]);
   return (
-    <div className="landing">
+    <div className="landing cockpit-landing">
       <a className="skip-link" href="#main">
         Skip to content
       </a>
@@ -55,178 +54,217 @@ export default function Landing() {
           <Logo />
         </Link>
         <div className="landing-links">
-          <a href="#possibilities">The possibilities</a>
-          <a href="#how-it-works">How it works</a>
+          <a href="#systems">System modules</a>
+          <a href="#pipeline">The pipeline</a>
         </div>
         <Link className="nav-enter" to="/auth">
-          Enter your space <ArrowUpRight size={16} />
+          Operator sign in <ArrowUpRight size={16} />
         </Link>
       </nav>
       <main id="main">
-        <section className="hero" ref={hero}>
-          <div className="hero-grid" aria-hidden="true" />
+        <section className="cockpit-hero" ref={hero}>
+          <div className="hero-topline">
+            <span>
+              <i /> KNOWLEDGE OPERATING SYSTEM
+            </span>
+            <span>KS—02 / RESEARCH DIVISION</span>
+          </div>
           <motion.div
-            className="hero-copy"
-            initial={{ opacity: 0, y: 24 }}
+            className="cockpit-hero-copy"
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 0.7 }}
           >
-            <div className="eyebrow">
-              <span className="live-dot" /> KNOWLEDGE, CONNECTED.
-            </div>
+            <span className="hero-kicker">
+              THE NEXT CONNECTION IS YOURS TO FIND.
+            </span>
             <h1>
-              Find the
+              YOUR
               <br />
-              connections.
+              KNOWLEDGE.
               <br />
-              <span>
-                See the bigger
-                <br className="small-break" /> picture.
-              </span>
+              <em>FULL CONTROL.</em>
             </h1>
             <p>
-              Your knowledge is more than a collection of files.
-              <br className="desktop-only" /> Turn it into a living universe of
-              ideas, relationships,
-              <br className="desktop-only" /> and discoveries. Every connection
-              has a source.
+              Turn scattered sources into connected intelligence. Command your
+              graph, watch knowledge take shape, and trace every answer back to
+              its evidence.
             </p>
             <div className="hero-actions">
               <Link className="button button-primary" to="/auth?mode=register">
-                Start connecting <ArrowUpRight size={18} />
+                Launch cockpit <ArrowUpRight size={20} />
               </Link>
-              <a className="text-link" href="#how-it-works">
-                Explore the process <ArrowDown size={15} />
+              <a href="#systems" className="text-link">
+                Explore systems <ArrowDown size={15} />
               </a>
             </div>
-            <div className="hero-note">
-              <Check size={14} /> Your documents. Your graph. Your next
-              discovery.
+            <div className="hero-security">
+              <Check size={13} /> PRIVATE SPACES <span>/</span> SOURCE-GROUNDED
+              AI <span>/</span> LIVE OPERATIONS
             </div>
           </motion.div>
-          <motion.div style={{ y, rotate }} className="hero-visual">
-            <div className="orb-halo" />
+          <motion.div className="reactor-viewport" style={{ y }}>
+            <div className="reactor-grid" />
+            <div className="reactor-axis axis-x" />
+            <div className="reactor-axis axis-y" />
+            <span className="reactor-coord coord-top">
+              KNOWSPHERE / NEURAL REACTOR
+            </span>
+            <span className="reactor-coord coord-bottom">
+              PROCEDURAL 3D ARTWORK · DRAG TO ROTATE
+            </span>
+            <div className="reactor-bracket bracket-tl" />
+            <div className="reactor-bracket bracket-br" />
             <VisualBoundary>
               <Suspense fallback={<div className="orb-fallback" />}>
                 <Orb />
               </Suspense>
             </VisualBoundary>
-            <span className="orbit-caption orbit-caption-one">
-              <i /> IDEAS
-            </span>
-            <span className="orbit-caption orbit-caption-two">
-              <i /> RELATIONSHIPS
-            </span>
-            <span className="orbit-caption orbit-caption-three">
-              <i /> CONTEXT
-            </span>
-            <div className="visual-coordinates">
-              <span>AN EXPLORATION OF CONNECTED THINKING</span>
-              <span>↗ DRAG YOUR CURIOSITY FURTHER</span>
+            <div className="reactor-label reactor-label-one">
+              <span>01 / INPUT</span>
+              <strong>YOUR SOURCES</strong>
+              <i />
             </div>
+            <div className="reactor-label reactor-label-two">
+              <span>02 / STRUCTURE</span>
+              <strong>VERIFIED EVIDENCE</strong>
+              <i />
+            </div>
+            <div className="reactor-label reactor-label-three">
+              <span>03 / OUTPUT</span>
+              <strong>CONNECTED KNOWLEDGE</strong>
+              <i />
+            </div>
+            <span className="reactor-cross">+</span>
           </motion.div>
-          <div className="hero-bottom">
-            <span>BUILT FOR THE CURIOUS MIND</span>
-            <a href="#possibilities">
-              Scroll to discover <ArrowDown size={14} />
+          <div className="hero-bottomline">
+            <span>SCATTERED INFORMATION → CONNECTED INTELLIGENCE</span>
+            <a href="#systems">
+              SCROLL TO INITIALIZE <ArrowDown size={14} />
             </a>
-            <span className="hero-version">KNOWSPHERE / 01</span>
           </div>
         </section>
-        <section id="possibilities" className="possibilities landing-section">
-          <div className="section-intro">
-            <span className="eyebrow">FROM INFORMATION TO UNDERSTANDING</span>
-            <h2>
-              The interesting part is
-              <br />
-              <span>between the dots.</span>
-            </h2>
+        <div className="system-marquee" aria-hidden="true">
+          <span>SOURCE INGESTION</span>
+          <i>+</i>
+          <span>LIVE TELEMETRY</span>
+          <i>+</i>
+          <span>3D GRAPH EXPLORATION</span>
+          <i>+</i>
+          <span>EVIDENCE TRACING</span>
+          <i>+</i>
+          <span>CITED INTELLIGENCE</span>
+        </div>
+        <section id="systems" className="systems-section">
+          <div className="systems-intro">
+            <div>
+              <span className="eyebrow">LOADOUT / CORE SYSTEMS</span>
+              <h2>
+                Built for the
+                <br />
+                <em>deep dive.</em>
+              </h2>
+            </div>
             <p>
-              Connect what you read to what you already know.
-              <br />
-              Then follow the thread somewhere new.
+              One cockpit for your entire research operation. Real documents.
+              Real relationships. Every signal has a source.
             </p>
           </div>
-          <div className="feature-grid">
+          <div className="system-cards">
             {[
               {
-                icon: <GitBranch />,
                 n: "01",
-                title: "Make knowledge visible.",
-                text: "Explore entities and relationships in an interactive 3D graph. Move through your ideas, inspect connections, and find the source behind each one.",
-                tags: "3D exploration · Source evidence",
-              },
-              {
-                icon: <Sparkles />,
-                n: "02",
-                title: "Ask with context.",
-                text: "Go beyond keyword search. Ask questions across your documents and get answers grounded in retrieved passages, with citations you can inspect.",
-                tags: "Graph-assisted retrieval · Cited answers",
-              },
-              {
                 icon: <ScanLine />,
+                label: "OPERATIONS",
+                title: "Watch it happen.",
+                text: "Follow ingestion from queue to evidence checkpoints to graph publication. A durable event log shows what changed and when.",
+                tags: "Live pipeline / Event history",
+              },
+              {
+                n: "02",
+                icon: <GitBranch />,
+                label: "TACTICAL GRAPH",
+                title: "Connect the unseen.",
+                text: "Orbit your knowledge in 3D. Isolate neighborhoods, trace paths between entities, and inspect the original quote behind a connection.",
+                tags: "3D exploration / Path tracing",
+              },
+              {
                 n: "03",
-                title: "Follow what emerges.",
-                text: "Discover connected communities and influential concepts using graph analysis. Watch your knowledge space change as new documents are indexed.",
-                tags: "Community detection · Live progress",
+                icon: <Sparkles />,
+                label: "INTELLIGENCE COMMS",
+                title: "Question everything.",
+                text: "Ask across your indexed sources. Watch the research trace, inspect retrieved passages, and receive streamed answers with citations.",
+                tags: "Source retrieval / Cited answers",
               },
             ].map((f, i) => (
               <motion.article
-                className="feature-card"
                 key={f.n}
-                initial={{ opacity: 0, y: 24 }}
+                className="system-card"
+                initial={{ opacity: 0, y: 25 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.12 }}
+                transition={{ delay: i * 0.1 }}
               >
-                <div className="feature-top">
+                <div className="system-card-top">
                   {f.icon}
-                  <span>{f.n}</span>
+                  <span>MODULE / {f.n}</span>
                 </div>
+                <span className="eyebrow">{f.label}</span>
                 <h3>{f.title}</h3>
                 <p>{f.text}</p>
-                <div className="feature-tags">{f.tags}</div>
+                <div>
+                  {f.tags}
+                  <ArrowUpRight size={17} />
+                </div>
               </motion.article>
             ))}
           </div>
         </section>
-        <section id="how-it-works" className="process landing-section">
-          <div className="section-intro">
-            <span className="eyebrow">A CLEAR PATH TO DISCOVERY</span>
+        <section id="pipeline" className="landing-pipeline">
+          <div>
+            <span className="eyebrow">PROTOCOL / SOURCE TO SIGNAL</span>
             <h2>
-              Bring your sources.
+              Feed the system.
               <br />
-              <span>Leave with perspective.</span>
+              <em>Expand your edge.</em>
             </h2>
+            <p>
+              Your knowledge grows from the documents you bring. No prefilled
+              universe. Start with a source and follow the connections.
+            </p>
+            <Link to="/auth?mode=register" className="button button-primary">
+              Initialize your space <ArrowUpRight size={18} />
+            </Link>
           </div>
-          <div className="process-steps">
+          <div className="protocol-steps">
             {[
               {
                 icon: <FileText />,
-                title: "Bring it together",
-                text: "Upload a PDF, Markdown, text, or CSV document. Or paste a passage directly into your knowledge space.",
+                n: "01",
+                title: "DEPLOY A SOURCE",
+                text: "Upload PDF, TXT, Markdown, CSV — or paste your research directly.",
               },
               {
                 icon: <Layers3 />,
-                title: "Let the structure emerge",
-                text: "AI extracts entities and relationships. Supporting quotes are checked against the original text before entering your graph.",
+                n: "02",
+                title: "EXTRACT & VALIDATE",
+                text: "AI identifies entities and relations. Evidence quotes must match the source before publication.",
               },
               {
                 icon: <Box />,
-                title: "Explore. Ask. Connect.",
-                text: "Navigate in 3D, inspect source evidence, and ask questions that bring connected information into focus.",
+                n: "03",
+                title: "EXPLORE & INTERROGATE",
+                text: "Follow the graph, find connecting paths, and ask questions grounded in retrieved passages.",
               },
-            ].map((step, i) => (
+            ].map((step) => (
               <motion.div
-                className="process-step"
-                key={step.title}
-                initial={{ opacity: 0, x: -15 }}
+                key={step.n}
+                initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
               >
-                <div className="step-number">0{i + 1}</div>
-                <div className="step-icon">{step.icon}</div>
+                <span>{step.n}</span>
+                <div className="protocol-icon">{step.icon}</div>
                 <div>
                   <h3>{step.title}</h3>
                   <p>{step.text}</p>
@@ -235,20 +273,26 @@ export default function Landing() {
             ))}
           </div>
         </section>
-        <section className="landing-cta">
-          <span className="eyebrow">YOUR NEXT IDEA IS ALREADY CONNECTED.</span>
-          <h2>Go find it.</h2>
+        <section className="cockpit-cta">
+          <span className="eyebrow">MISSION / YOUR NEXT DISCOVERY</span>
+          <h2>
+            Take the
+            <br />
+            <em>controls.</em>
+          </h2>
           <Link className="button button-primary" to="/auth?mode=register">
-            Create your knowledge space <ArrowRight size={18} />
+            Enter KnowSphere <ArrowRight size={18} />
           </Link>
-          <p>Start with your own sources. Build from there.</p>
+          <span className="cta-coordinate">
+            SOURCE → STRUCTURE → UNDERSTANDING
+          </span>
         </section>
       </main>
       <footer className="landing-footer">
         <Logo />
-        <span>Intelligence begins with a connection.</span>
+        <span>KNOWLEDGE IS YOUR ADVANTAGE.</span>
         <a href="#main">
-          Back to the beginning <ArrowUpRight size={14} />
+          BACK TO SURFACE <ArrowUpRight size={14} />
         </a>
       </footer>
     </div>

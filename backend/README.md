@@ -143,3 +143,9 @@ uv pip compile pyproject.toml --extra dev --generate-hashes -o requirements-dev.
 Events, expired sessions, stale worker records, and rate-limit buckets are pruned by worker maintenance. Events retain seven days. Sources, graph records and conversations persist until explicitly deleted. Original uploaded binaries are not stored; their extracted text is. Saved conversation citation snapshots persist separately from a deleted source.
 
 This is a working individual-workspace release. Public launch still needs hosted-path verification, load tests, backup/restore rehearsal, monitoring/alerts, and an edge-wide request/connection abuse policy. Password reset email, account verification, team roles, OCR, crawling, billing and enterprise compliance are outside the implemented scope.
+
+## Cockpit telemetry API
+
+`GET /api/spaces/{space_id}/operations` returns owner-scoped document jobs with durable chunk completion counts and source-validated mention/relationship counts. `GET /api/spaces/{space_id}/activity?limit=50&before=<event_id>` returns newest-first durable events; limits are bounded to 100 and retention remains seven days. Both endpoints enforce space ownership.
+
+The existing events stream now includes named `heartbeat` frames with server time/cursor, plus explicit chunking, extracting and committed-checkpoint events. `change` frames include stable event IDs. Chat streams add `stage` frames (`retrieved`, `generating`, `validating`) and measured `elapsed_ms`/`token_events` in `done`. Existing `context`, `token`, `done`, and `error` frames are preserved. No new environment variables or migrations are required.

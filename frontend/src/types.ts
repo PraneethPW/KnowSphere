@@ -118,10 +118,52 @@ export type EntityDetail = {
   }[];
 };
 export const KIND_COLORS: Record<string, string> = {
-  concept: "#d9f99d",
-  technology: "#92b9f6",
-  person: "#d5a8ee",
-  organization: "#f2ba8e",
-  location: "#7cdbca",
-  event: "#f29cb6",
+  concept: "#38e8f2",
+  technology: "#718bff",
+  person: "#c589ff",
+  organization: "#ff965a",
+  location: "#5df0bb",
+  event: "#ff658b",
+};
+
+export type ActivityEvent = {
+  id: number;
+  kind: string;
+  created_at: string;
+  payload: {
+    title?: string;
+    document_id?: string;
+    deleted_document_id?: string;
+    conversation_id?: string;
+    status?: string;
+    stage?: string;
+    progress?: number;
+    chunks_done?: number;
+    chunks_total?: number;
+    chunk?: number;
+    retrying?: boolean;
+  };
+};
+export type Operation = {
+  id: string;
+  title: string;
+  status: Document["status"];
+  progress: number;
+  error: string | null;
+  attempts: number;
+  available_at: string;
+  created_at: string;
+  updated_at: string;
+  chunks_total: number;
+  chunks_done: number;
+  verified_mentions: number;
+  verified_relationships: number;
+};
+export type SearchPassage = {
+  id: string;
+  document_id: string;
+  title: string;
+  content: string;
+  ordinal: number;
+  score: number;
 };

@@ -4,8 +4,10 @@ import hashlib
 import logging
 import re
 import secrets
+import time
 import uuid
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response, UploadFile
@@ -246,6 +248,42 @@ async def documents(space_id: uuid.UUID, user: User):
     )
 
 
+@app.get("/api/spaces/{space_id}/operations")
+async def operations(space_id: uuid.UUID, user: User):
+    """Durable job telemetry, including checkpoints that survive worker restarts."""
+    await owned_space(space_id, user)
+    return await db.fetch(
+        """SELECT d.id,d.title,d.status,d.progress,d.error,d.attempts,d.available_at,
+        d.created_at,d.updated_at,
+        (SELECT count(*) FROM knowsphere.chunks c WHERE c.document_id=d.id) AS chunks_total,
+        (SELECT count(*) FROM knowsphere.chunks c WHERE c.document_id=d.id AND c.processed) AS chunks_done,
+        (SELECT count(*) FROM knowsphere.mentions m JOIN knowsphere.chunks c ON c.id=m.chunk_id
+          WHERE c.document_id=d.id) AS verified_mentions,
+        (SELECT count(*) FROM knowsphere.relationships r JOIN knowsphere.chunks c ON c.id=r.chunk_id
+          WHERE c.document_id=d.id) AS verified_relationships
+        FROM knowsphere.documents d WHERE d.space_id=%s
+        ORDER BY CASE d.status WHEN 'processing' THEN 0 WHEN 'queued' THEN 1
+        WHEN 'failed' THEN 2 ELSE 3 END,d.updated_at DESC LIMIT 200""",
+        (space_id,),
+    )
+
+
+@app.get("/api/spaces/{space_id}/activity")
+async def activity(
+    space_id: uuid.UUID,
+    user: User,
+    before: int | None = Query(default=None, ge=1),
+    limit: int = Query(default=50, ge=1, le=100),
+):
+    await owned_space(space_id, user)
+    return await db.fetch(
+        """SELECT id,kind,payload,created_at FROM knowsphere.events
+        WHERE space_id=%s AND (%s::bigint IS NULL OR id<%s)
+        ORDER BY id DESC LIMIT %s""",
+        (space_id, before, before, limit),
+    )
+
+
 async def enqueue(space_id, title, content, format):
     content = clean_text(content)
     if not 40 <= len(content) <= settings().max_document_chars:
@@ -345,7 +383,7 @@ async def retry_document(space_id: uuid.UUID, document_id: uuid.UUID, user: User
         ).fetchone()
         if not row:
             raise HTTPException(409, "Only failed or cancelled documents can be retried.")
-        await emit(conn, space_id, "document.updated", {"document_id": str(document_id)})
+        await emit(conn, space_id, "document.updated", {"document_id": str(document_id), "status": "queued"})
     return {"status": "queued"}
 
 
@@ -362,7 +400,9 @@ async def cancel_document(space_id: uuid.UUID, document_id: uuid.UUID, user: Use
         ).fetchone()
         if not row:
             raise HTTPException(409, "This document is not currently processing.")
-        await emit(conn, space_id, "document.updated", {"document_id": str(document_id)})
+        await emit(
+            conn, space_id, "document.updated", {"document_id": str(document_id), "status": "cancelled"}
+        )
     return {"status": "cancelled"}
 
 
@@ -489,6 +529,7 @@ async def delete_conversation(space_id: uuid.UUID, conversation_id: uuid.UUID, u
 
 @app.post("/api/spaces/{space_id}/chat")
 async def chat(space_id: uuid.UUID, body: ChatBody, user: User):
+    started = time.monotonic()
     await owned_space(space_id, user)
     require_ai()
     await rate_limit(f"chat:{user['id']}", 8)
@@ -569,14 +610,27 @@ Keep answers clear and concise.\n<retrieved_sources>\n"""
 
     async def generate():
         output, model = "", settings().openrouter_model
+        token_events = 0
         try:
+            yield sse(
+                "stage",
+                {
+                    "stage": "retrieved",
+                    "passages": len(chunks),
+                    "documents": len({c["document_id"] for c in chunks}),
+                    "elapsed_ms": round((time.monotonic() - started) * 1000),
+                },
+            )
             yield sse("context", {"conversation_id": str(conversation_id), "citations": citations})
+            yield sse("stage", {"stage": "generating"})
             async with asyncio.timeout(150):
                 async for event in ai.stream_answer(prompt):
                     model = event.get("model", model)
                     if "token" in event:
+                        token_events += 1
                         output += event["token"]
                         yield sse("token", {"text": event["token"]})
+            yield sse("stage", {"stage": "validating", "token_events": token_events})
             if not output.strip():
                 raise ai.AIError("The AI did not return an answer. Please retry.")
             used = discovery.used_citations(output, citations)
@@ -606,7 +660,16 @@ Keep answers clear and concise.\n<retrieved_sources>\n"""
                     )
                 ).fetchone()
                 await emit(conn, space_id, "conversation.updated", {"conversation_id": str(conversation_id)})
-            yield sse("done", {"message_id": str(message["id"]), "model": model, "citations": used})
+            yield sse(
+                "done",
+                {
+                    "message_id": str(message["id"]),
+                    "model": model,
+                    "citations": used,
+                    "elapsed_ms": round((time.monotonic() - started) * 1000),
+                    "token_events": token_events,
+                },
+            )
         except (ai.AIError, TimeoutError) as exc:
             yield sse("error", {"message": str(exc) or "The answer timed out. Please retry."})
         except asyncio.CancelledError:
@@ -661,11 +724,15 @@ async def events(space_id: uuid.UUID, request: Request, user: User, after: int =
                 cursor = row["id"]
                 yield sse(
                     "change",
-                    {"kind": row["kind"], "payload": row["payload"], "created_at": row["created_at"]},
+                    {
+                        "id": row["id"],
+                        "kind": row["kind"],
+                        "payload": row["payload"],
+                        "created_at": row["created_at"],
+                    },
                     cursor,
                 )
-            if not rows:
-                yield ": heartbeat\n\n"
+            yield sse("heartbeat", {"server_time": datetime.now(UTC), "cursor": cursor})
             await asyncio.sleep(2)
 
     return StreamingResponse(

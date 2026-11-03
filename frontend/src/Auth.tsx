@@ -54,13 +54,13 @@ export default function Auth() {
           <i />
         </div>
         <div className="auth-art-copy">
-          <div className="eyebrow">ONE IDEA LEADS TO ANOTHER.</div>
+          <div className="eyebrow">OPERATOR ACCESS / KNOWSPHERE</div>
           <h2>
-            Make room for
+            Take control of
             <br />
-            your next
+            your connected
             <br />
-            <em>discovery.</em>
+            <em>intelligence.</em>
           </h2>
         </div>
       </div>
@@ -70,14 +70,16 @@ export default function Auth() {
         animate={{ opacity: 1, y: 0 }}
       >
         <Logo />
-        <div className="eyebrow">YOUR CONNECTED KNOWLEDGE SPACE</div>
+        <div className="eyebrow">SECURE ACCESS / MISSION CONTROL</div>
         <h1>
-          {registering ? "A new perspective starts here." : "Welcome back."}
+          {registering
+            ? "Initialize your operator profile."
+            : "Welcome back, operator."}
         </h1>
         <p>
           {registering
             ? "Create an account and bring your first source."
-            : "Your ideas are waiting to be connected."}
+            : "Your mission space is ready for you."}
         </p>
         <div className="auth-switch">
           <button
@@ -159,9 +161,7 @@ export default function Auth() {
               />
             ) : (
               <>
-                {registering
-                  ? "Create your knowledge space"
-                  : "Enter your space"}
+                {registering ? "Create your knowledge space" : "Enter cockpit"}
                 <ArrowUpRight size={18} />
               </>
             )}

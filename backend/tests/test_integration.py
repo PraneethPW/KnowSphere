@@ -176,3 +176,32 @@ async def test_repeated_worker_interruptions_reach_retryable_failure(client):
     assert await claim() is None
     row = await db.one("SELECT status,error FROM knowsphere.documents WHERE id=%s", (doc["id"],))
     assert row["status"] == "failed" and "interrupted" in row["error"]
+
+
+async def test_operations_history_checkpoints_and_cursor_are_owner_scoped(client):
+    space = await register(client)
+    doc = await enqueue(space, "Checkpoint notes", "KnowSphere uses Neon for durable graph storage.", "text")
+    job = await claim()
+    chunk = await db.one(
+        "INSERT INTO knowsphere.chunks(document_id,ordinal,content) VALUES (%s,0,%s) RETURNING *",
+        (doc["id"], "KnowSphere uses Neon for durable graph storage."),
+    )
+    await save_extraction(job, chunk, Extraction(entities=[], relationships=[]))
+    telemetry = (await client.get(f"/api/spaces/{space}/operations")).json()
+    assert len(telemetry) == 1
+    assert telemetry[0]["chunks_done"] == telemetry[0]["chunks_total"] == 1
+    assert telemetry[0]["verified_relationships"] == 0
+    events = (await client.get(f"/api/spaces/{space}/activity?limit=1")).json()
+    assert len(events) == 1 and events[0]["payload"]["stage"] == "checkpoint"
+    previous = (await client.get(f"/api/spaces/{space}/activity?before={events[0]['id']}")).json()
+    assert len(previous) == 1 and previous[0]["kind"] == "document.created"
+    assert previous[0]["id"] < events[0]["id"]
+    assert (await client.get(f"/api/spaces/{space}/activity?limit=1000")).status_code == 422
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://localhost", headers=dict(client.headers)
+    ) as other:
+        other_space = await register(other, "second-operator@example.com")
+        for path in ["operations", "activity?limit=1", f"activity?before={events[0]['id']}"]:
+            assert (await other.get(f"/api/spaces/{space}/{path}")).status_code == 404
+        assert (await other.get(f"/api/spaces/{other_space}/operations")).json() == []
+        assert (await other.get(f"/api/spaces/{other_space}/activity")).json() == []

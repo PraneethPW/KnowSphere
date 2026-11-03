@@ -29,6 +29,7 @@ import {
   Spinner,
   useToast,
 } from "../components/UI";
+import { Pipeline } from "./Operations";
 import { useWorkspace } from "../Workspace";
 
 export function SourceModal({
@@ -130,7 +131,7 @@ function AddSource({ onClose }: { onClose: () => void }) {
   }
   return (
     <Modal
-      title="Bring a source into your sphere"
+      title="Launch source ingestion"
       onClose={() => {
         if (!busy) onClose();
       }}
@@ -263,7 +264,7 @@ export default function Library() {
     client = useQueryClient(),
     toast = useToast();
   const [params, setParams] = useSearchParams(),
-    [adding, setAdding] = useState(false),
+    [adding, setAdding] = useState(params.has("add")),
     [remove, setRemove] = useState<Document | null>(null);
   const [filter, setFilter] = useState("all"),
     [search, setSearch] = useState("");
@@ -306,9 +307,9 @@ export default function Library() {
   return (
     <>
       <SectionHeading
-        eyebrow="THE FOUNDATION OF YOUR KNOWLEDGE"
-        title="Your source library."
-        description="Bring your research together. Every source adds a new perspective."
+        eyebrow="HANGAR / SOURCE CONTROL"
+        title="Source hangar"
+        description="Upload, inspect, and manage the documents powering your intelligence graph."
         action={
           <button
             className="button button-primary"
@@ -328,6 +329,7 @@ export default function Library() {
           <Activity size={14} /> Ingestion updates live
         </span>
       </div>
+      <Pipeline compact />
       <section className="panel library-panel">
         <div className="library-toolbar">
           <div className="tabs">

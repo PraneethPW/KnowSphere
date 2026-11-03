@@ -2,31 +2,21 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
-  ArrowRight,
   ArrowUpRight,
-  BookOpen,
   Boxes,
-  Check,
-  ChevronRight,
   CircleDot,
-  FileText,
   GitBranch,
   Layers3,
   LockKeyhole,
-  MessageSquare,
   Network,
   Plus,
   ShieldCheck,
-  Sparkles,
   Users,
-  Zap,
 } from "lucide-react";
-import { motion } from "framer-motion";
 import { api, downloadGraph, post } from "../api";
-import type { Document, GraphData, OverviewData, SystemInfo } from "../types";
+import type { GraphData, OverviewData, SystemInfo } from "../types";
 import { KIND_COLORS } from "../types";
 import {
-  date,
   Empty,
   ErrorBox,
   number,
@@ -50,264 +40,7 @@ export function useGraph() {
     queryFn: () => api<GraphData>(`/spaces/${space.id}/graph`),
   });
 }
-export function Overview() {
-  const { space, user } = useWorkspace(),
-    stats = useOverview(),
-    graph = useGraph();
-  const documents = useQuery({
-    queryKey: ["documents", space.id],
-    queryFn: () => api<Document[]>(`/spaces/${space.id}/documents`),
-  });
-  const navigate = useNavigate();
-  const topNodes = [...(graph.data?.nodes || [])]
-    .sort((a, b) => b.centrality - a.centrality)
-    .slice(0, 5);
-  return (
-    <>
-      <SectionHeading
-        eyebrow="A LITTLE CURIOSITY GOES A LONG WAY"
-        title={`Welcome to your sphere, ${user.name.split(" ")[0]}.`}
-        description="A connected view of everything you’re learning."
-        action={
-          <Link className="button button-primary" to="/app/library">
-            <Plus size={17} /> Add a source
-          </Link>
-        }
-      />
-      {stats.error && (
-        <ErrorBox error={stats.error} retry={() => void stats.refetch()} />
-      )}
-      <div className="stats-grid">
-        {[
-          {
-            title: "Indexed sources",
-            value: stats.data?.ready_documents,
-            total: stats.data
-              ? `${stats.data.documents} total documents`
-              : "From your source library",
-            icon: FileText,
-          },
-          {
-            title: "Connected entities",
-            value: stats.data?.entities,
-            total: "Ideas, people, places & more",
-            icon: CircleDot,
-          },
-          {
-            title: "Relationships",
-            value: stats.data?.relationships,
-            total: "Backed by source evidence",
-            icon: GitBranch,
-          },
-          {
-            title: "Active jobs",
-            value: stats.data?.active_jobs,
-            total: stats.data?.failed_jobs
-              ? `${stats.data.failed_jobs} need your attention`
-              : "Live ingestion progress",
-            icon: Activity,
-          },
-        ].map((s, i) => (
-          <motion.div
-            className="stat-card"
-            key={s.title}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.06 }}
-          >
-            <div>
-              <span>{s.title}</span>
-              <s.icon size={17} />
-            </div>
-            <strong>{number(s.value)}</strong>
-            <small>{s.total}</small>
-          </motion.div>
-        ))}
-      </div>
-      <div className="overview-columns">
-        <section className="panel graph-preview">
-          <div className="panel-heading">
-            <div>
-              <span className="eyebrow">EXPAND YOUR PERSPECTIVE</span>
-              <h2>Your knowledge, connected.</h2>
-            </div>
-            <Link
-              className="icon-button"
-              to="/app/graph"
-              aria-label="Open knowledge graph"
-            >
-              <ArrowUpRight size={20} />
-            </Link>
-          </div>
-          {graph.isPending ? (
-            <Spinner label="Reading your graph" />
-          ) : graph.error ? (
-            <ErrorBox error={graph.error} retry={() => void graph.refetch()} />
-          ) : graph.data?.nodes.length ? (
-            <div className="graph-overview-real">
-              <div className="constellation-list">
-                {topNodes.map((n, i) => (
-                  <button
-                    key={n.id}
-                    onClick={() => navigate(`/app/graph?entity=${n.id}`)}
-                    className={`constellation-item position-${i}`}
-                  >
-                    <i style={{ background: KIND_COLORS[n.kind] }} />
-                    <span>{n.name}</span>
-                    <small>{n.degree} connections</small>
-                  </button>
-                ))}
-              </div>
-              <div className="graph-overview-info">
-                <span>
-                  {number(graph.data.communities)} communities in the visible
-                  graph
-                </span>
-                <Link to="/app/graph">
-                  Explore in 3D <ArrowRight size={16} />
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <Empty
-              icon={<Network size={40} />}
-              title="Your universe starts with a source."
-              description="Add a document to reveal its entities and the relationships that connect them."
-              action={
-                <Link className="button button-secondary" to="/app/library">
-                  Bring your first source <ArrowUpRight size={16} />
-                </Link>
-              }
-            />
-          )}
-        </section>
-        <section className="panel ask-preview">
-          <span className="eyebrow">
-            <Sparkles size={14} /> ASK KNOWSPHERE
-          </span>
-          <h2>
-            Better questions.
-            <br />
-            <span>Connected answers.</span>
-          </h2>
-          <p>
-            Ask across your sources. Follow the evidence. Find an answer with
-            context.
-          </p>
-          <div className="prompt-preview">
-            <MessageSquare size={18} />
-            <span>What connects the ideas in my research?</span>
-          </div>
-          <Link className="button button-primary" to="/app/chat">
-            Start a conversation <ArrowUpRight size={16} />
-          </Link>
-          <small>
-            <ShieldCheck size={13} /> Cited passages, inspectable sources.
-          </small>
-        </section>
-      </div>
-      <div className="overview-columns lower">
-        <section className="panel">
-          <div className="panel-heading">
-            <h2>Recent sources</h2>
-            <Link className="text-link" to="/app/library">
-              View library <ArrowRight size={14} />
-            </Link>
-          </div>
-          {documents.isPending ? (
-            <Spinner />
-          ) : documents.error ? (
-            <ErrorBox
-              error={documents.error}
-              retry={() => void documents.refetch()}
-            />
-          ) : documents.data?.length ? (
-            <div className="recent-list">
-              {documents.data.slice(0, 5).map((d) => (
-                <button
-                  className="recent-row"
-                  key={d.id}
-                  onClick={() => navigate(`/app/library?document=${d.id}`)}
-                >
-                  <span className="file-icon">
-                    <FileText size={18} />
-                  </span>
-                  <div>
-                    <strong>{d.title}</strong>
-                    <small>
-                      {d.format.toUpperCase()} · {date(d.created_at)}
-                    </small>
-                  </div>
-                  <span className={`status-badge status-${d.status}`}>
-                    {d.status === "ready" ? (
-                      <Check size={11} />
-                    ) : d.status === "processing" ? (
-                      <Activity size={11} />
-                    ) : null}
-                    {d.status}
-                  </span>
-                  <ChevronRight size={15} />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="compact-empty">
-              <BookOpen size={24} />
-              <p>No sources yet. Your library is ready when you are.</p>
-            </div>
-          )}
-        </section>
-        <section className="panel">
-          <div className="panel-heading">
-            <h2>Live activity</h2>
-            <span className="tiny-tag">FROM YOUR SPACE</span>
-          </div>
-          {stats.data?.recent_activity.length ? (
-            <div className="activity-list">
-              {stats.data.recent_activity.slice(0, 6).map((e) => (
-                <div className="activity-item" key={e.id}>
-                  <span className="activity-dot" />
-                  <div>
-                    <strong>
-                      {e.kind === "document.created"
-                        ? "Source added"
-                        : e.kind === "graph.updated"
-                          ? "Graph updated"
-                          : e.kind === "conversation.updated"
-                            ? "Answer saved"
-                            : "Ingestion progress updated"}
-                    </strong>
-                    <p>
-                      {e.payload.title ||
-                        (e.payload.status === "ready"
-                          ? "Source indexed and ready to explore"
-                          : e.payload.progress !== undefined
-                            ? `${e.payload.progress}% processed`
-                            : "Your space has new activity")}
-                    </p>
-                  </div>
-                  <small>
-                    {new Date(e.created_at).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </small>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="compact-empty">
-              <Zap size={24} />
-              <p>
-                Activity will appear here as you build your knowledge space.
-              </p>
-            </div>
-          )}
-        </section>
-      </div>
-    </>
-  );
-}
+export { default as Overview } from "./CommandCenter";
 
 export function Insights() {
   const graph = useGraph(),
@@ -333,8 +66,8 @@ export function Insights() {
   return (
     <>
       <SectionHeading
-        eyebrow="FOLLOW THE PATTERNS"
-        title="A different kind of discovery."
+        eyebrow="ANALYSIS / PATTERN INTELLIGENCE"
+        title="Graph analysis"
         description="Data-driven graph analysis reveals what’s central, what’s connected, and what stands apart."
       />
       {graph.isPending ? (
@@ -519,8 +252,8 @@ export function SettingsPage() {
   return (
     <>
       <SectionHeading
-        eyebrow="YOUR WORKSPACE, UNDER THE HOOD"
-        title="Settings & system status."
+        eyebrow="SYSTEM / SERVICE DIAGNOSTICS"
+        title="System control"
         description="Connection health, account details, and the tools behind your research."
       />
       {system.error && (

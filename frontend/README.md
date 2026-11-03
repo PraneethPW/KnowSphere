@@ -60,3 +60,9 @@ Three.js is intentionally lazy loaded. The graph's force layout runs in a Web Wo
 Keep API responses uncached. Security headers and a same-origin CSP are included. Cookies stay HttpOnly and first-party because the browser talks to `/api` on Vercel, which proxies to Railway. Do not substitute a direct cross-site API URL in the React client. Each preview domain must be explicitly allowed by the backend or assigned a stable preview alias; do not use a wildcard credentialed origin.
 
 The deployment preflight fails clearly when the rewrite has not been configured. A successful static build alone does not verify live Railway connectivity.
+
+## Cockpit UI
+
+`src/cockpit.css` defines the navy/cyan/orange instruments, angular panels, responsive layouts and reduced-motion overrides. `public/fonts` contains licensed, self-hosted Latin WOFF2 fonts and their OFL notices. `src/live.tsx` owns one reconnectable event subscription per active space and merges durable history after the server cursor is established.
+
+The command-center radar uses actual graph records. Operations show worker checkpoints and retained events; tactical tools calculate paths on the visible filtered graph; Cmd/Ctrl+K opens entity/passage search. The comms research monitor renders measured request events, not simulated progress. Three.js remains lazy loaded and its rendering/layout resources are cleaned up when unmounted.
