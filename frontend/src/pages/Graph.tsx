@@ -33,7 +33,7 @@ import {
 import { VisualBoundary } from "../Landing";
 import { useWorkspace } from "../Workspace";
 import { shortestPath } from "../graph-tools";
-import { useGraph } from "./Dashboard";
+import { useGraph, useOverview } from "./Dashboard";
 
 const GraphScene = lazy(() => import("../components/GraphScene"));
 function EntityInspector({ id, onClose }: { id: string; onClose: () => void }) {
@@ -130,6 +130,7 @@ function EntityInspector({ id, onClose }: { id: string; onClose: () => void }) {
 }
 export default function GraphPage() {
   const graph = useGraph(),
+    overview = useOverview(),
     { space } = useWorkspace(),
     toast = useToast(),
     container = useRef<HTMLDivElement>(null);
@@ -486,11 +487,22 @@ export default function GraphPage() {
           ) : !graph.data?.nodes.length ? (
             <Empty
               icon={<Network size={44} />}
-              title="The first dot is yours to place."
-              description="Index a source to create real entities and relationships. Your knowledge graph grows from the documents you bring."
+              title={
+                overview.data?.ready_documents
+                  ? "Sources indexed. No graph entities yet."
+                  : "The first dot is yours to place."
+              }
+              description={
+                overview.data?.ready_documents
+                  ? "AI extraction has not produced supported entities. Your source text is still searchable in the search console and Intelligence comms. Inspect your sources or add a document with specific named facts."
+                  : "Index a source to create real entities and relationships. Your knowledge graph grows from the documents you bring."
+              }
               action={
                 <Link className="button button-primary" to="/app/library">
-                  Add your first source <ArrowUpRight size={16} />
+                  {overview.data?.ready_documents
+                    ? "Review sources"
+                    : "Add your first source"}{" "}
+                  <ArrowUpRight size={16} />
                 </Link>
               }
             />

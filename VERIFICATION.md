@@ -117,3 +117,5 @@ A disposable account then exercised the actual public Vercel → Railway → Neo
 This records functional verification, not a claim that every possible input, traffic level or upstream failure has been exhaustively tested. Email password reset/verification, OAuth, OCR and team sharing remain outside the implemented application. No simulated AI or demo records were added.
 
 Repeat public release smoke checks from `frontend` with `npm run smoke -- https://knowsphere-ai-praneethpw.vercel.app`. Follow [INSTALL.md](INSTALL.md) for reproducible installation and the full environment-variable table.
+
+A subsequent release check completed ingestion without satisfying the verifier's requirement for a populated graph. That requirement was too strict: valid extraction may produce no supported entities or no edges. The verifier now checks the returned schema and every published relationship quote against the actual source instead of demanding invented connections. Indexed-source empty states in command center, graph, analysis and chat now explain that source text remains searchable when no graph entities were extracted.

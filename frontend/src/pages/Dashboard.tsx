@@ -45,6 +45,7 @@ export { default as Overview } from "./CommandCenter";
 
 export function Insights() {
   const graph = useGraph(),
+    overview = useOverview(),
     navigate = useNavigate();
   const ranked = [...(graph.data?.nodes || [])]
     .sort((a, b) => b.centrality - a.centrality)
@@ -79,8 +80,16 @@ export function Insights() {
         <div className="panel">
           <Empty
             icon={<Boxes size={38} />}
-            title="Patterns need a starting point."
-            description="Index your first document to discover communities and influential concepts in your graph."
+            title={
+              overview.data?.ready_documents
+                ? "No graph patterns to analyze yet."
+                : "Patterns need a starting point."
+            }
+            description={
+              overview.data?.ready_documents
+                ? "Your documents are indexed, but extraction has not produced evidenced entities. Search and chat remain available for the indexed source text."
+                : "Index your first document to discover communities and influential concepts in your graph."
+            }
             action={
               <Link to="/app/library" className="button button-primary">
                 Add a source <Plus size={16} />

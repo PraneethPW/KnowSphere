@@ -32,7 +32,7 @@ import {
 } from "../components/UI";
 import { useWorkspace } from "../Workspace";
 import { useClock } from "../components/Telemetry";
-import { useGraph } from "./Dashboard";
+import { useGraph, useOverview } from "./Dashboard";
 
 export default function ChatPage() {
   const { space, openDocument } = useWorkspace(),
@@ -62,6 +62,7 @@ export default function ChatPage() {
     scrolling = useRef<HTMLDivElement>(null),
     streaming = useRef(false);
   const graph = useGraph();
+  const overview = useOverview();
   const ideas = [...(graph.data?.nodes || [])]
     .sort((a, b) => b.centrality - a.centrality)
     .slice(0, 3);
@@ -425,7 +426,9 @@ export default function ChatPage() {
                   <BookOpen size={13} />{" "}
                   {graph.data?.nodes.length
                     ? `${graph.data.total_entities} entities connected to indexed source evidence.`
-                    : "Add and index a source before asking your first question."}
+                    : overview.data?.ready_documents
+                      ? "Your indexed source text is ready to search, even without extracted graph entities."
+                      : "Add and index a source before asking your first question."}
                 </small>
               </div>
             ) : (

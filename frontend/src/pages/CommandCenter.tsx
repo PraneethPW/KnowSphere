@@ -233,10 +233,21 @@ export default function CommandCenter() {
               {!nodes.length && (
                 <div className="radar-empty">
                   <Crosshair size={38} />
-                  <strong>AWAITING YOUR FIRST SOURCE</strong>
-                  <p>No indexed signals in this mission space.</p>
+                  <strong>
+                    {stats.data?.ready_documents
+                      ? "NO GRAPH ENTITIES YET"
+                      : "AWAITING YOUR FIRST SOURCE"}
+                  </strong>
+                  <p>
+                    {stats.data?.ready_documents
+                      ? "Your sources are indexed and searchable. AI extraction has not produced evidenced entities."
+                      : "No indexed signals in this mission space."}
+                  </p>
                   <Link className="text-link" to="/app/library?add=1">
-                    Upload a source <ArrowUpRight size={14} />
+                    {stats.data?.ready_documents
+                      ? "Add another source"
+                      : "Upload a source"}{" "}
+                    <ArrowUpRight size={14} />
                   </Link>
                 </div>
               )}
