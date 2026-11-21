@@ -606,3 +606,10 @@ select:focus-visible,
   white-space: nowrap;
   padding-inline: 8px;
 }
+/* Drei owns only this empty portal's children; React owns the container itself. */
+.graph-label-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Html, OrbitControls } from "@react-three/drei";
 import { useReducedMotion } from "framer-motion";
@@ -18,6 +19,7 @@ function Scene({
   reset,
   fresh,
   path,
+  labelPortal,
 }: {
   nodes: GraphNode[];
   links: GraphLink[];
@@ -28,6 +30,7 @@ function Scene({
   reset: number;
   fresh: Set<string>;
   path: string[];
+  labelPortal: RefObject<HTMLElement>;
 }) {
   const [hovered, setHovered] = useState(""),
     group = useRef<THREE.Group>(null),
@@ -165,6 +168,7 @@ function Scene({
               />
               {(active || (labels && i < 28 && !dim)) && (
                 <Html
+                  portal={labelPortal}
                   position={[0, 1.8, 0]}
                   center
                   style={{ pointerEvents: "none" }}
@@ -203,6 +207,11 @@ export default function GraphScene(props: {
 }) {
   const reduced = useReducedMotion();
   const { immersive } = useAppearance();
+  const [labelElement, setLabelElement] = useState<HTMLDivElement | null>(null);
+  const labelPortal = useMemo(
+    () => (labelElement ? { current: labelElement } : null),
+    [labelElement],
+  );
   const [positions, setPositions] = useState<
     Map<string, [number, number, number]>
   >(new Map());
@@ -245,8 +254,15 @@ export default function GraphScene(props: {
         onPointerMissed={() => props.onSelect("")}
       >
         <color attach="background" args={["#070f1d"]} />
-        {positions.size > 0 && <Scene {...props} positions={positions} />}
+        {positions.size > 0 && labelPortal && (
+          <Scene {...props} positions={positions} labelPortal={labelPortal} />
+        )}
       </Canvas>
+      <div
+        ref={setLabelElement}
+        className="graph-label-overlay"
+        aria-hidden="true"
+      />
       {positions.size === 0 && (
         <div className="graph-positioning">
           Finding the shape of your connections…
