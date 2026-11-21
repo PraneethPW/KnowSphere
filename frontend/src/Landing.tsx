@@ -13,8 +13,14 @@ import {
   ScanLine,
   Sparkles,
 } from "lucide-react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { Logo } from "./components/UI";
+import { AppearanceToggle, useAppearance } from "./components/Atmosphere";
 
 const Orb = lazy(() => import("./components/Orb"));
 export class VisualBoundary extends Component<
@@ -60,6 +66,8 @@ export class VisualBoundary extends Component<
 }
 
 export default function Landing() {
+  const { immersive } = useAppearance();
+  const reduced = useReducedMotion();
   const hero = useRef(null);
   const { scrollYProgress } = useScroll({
     target: hero,
@@ -79,6 +87,7 @@ export default function Landing() {
           <a href="#systems">System modules</a>
           <a href="#pipeline">The pipeline</a>
         </div>
+        <AppearanceToggle />
         <Link className="nav-enter" to="/auth">
           Operator sign in <ArrowUpRight size={16} />
         </Link>
@@ -125,7 +134,10 @@ export default function Landing() {
               AI <span>/</span> LIVE OPERATIONS
             </div>
           </motion.div>
-          <motion.div className="reactor-viewport" style={{ y }}>
+          <motion.div
+            className="reactor-viewport"
+            style={{ y: reduced ? 0 : y }}
+          >
             <div className="reactor-grid" />
             <div className="reactor-axis axis-x" />
             <div className="reactor-axis axis-y" />
@@ -139,7 +151,7 @@ export default function Landing() {
             <div className="reactor-bracket bracket-br" />
             <VisualBoundary>
               <Suspense fallback={<div className="orb-fallback" />}>
-                <Orb />
+                {immersive && <Orb />}
               </Suspense>
             </VisualBoundary>
             <div className="reactor-label reactor-label-one">

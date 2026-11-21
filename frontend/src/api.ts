@@ -86,6 +86,8 @@ export async function streamChat(
     );
   }
   if (!response.ok || !response.body) {
+    if (response.status === 401)
+      window.dispatchEvent(new Event("knowsphere:expired"));
     const data = await response.json().catch(() => ({}));
     throw new ApiError(
       data.detail || "The answer could not be started.",
@@ -99,7 +101,10 @@ export async function streamChat(
   try {
     while (true) {
       const { done, value } = await reader.read();
-      buffer += decoder.decode(value, { stream: !done }).replace(/\r\n/g, "\n");
+      buffer = (buffer + decoder.decode(value, { stream: !done })).replace(
+        /\r\n/g,
+        "\n",
+      );
       let boundary: number;
       while ((boundary = buffer.indexOf("\n\n")) !== -1) {
         const parsed = parseSSEFrame(buffer.slice(0, boundary));

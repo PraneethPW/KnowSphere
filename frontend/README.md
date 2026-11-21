@@ -1,6 +1,6 @@
 # KnowSphere frontend
 
-React + TypeScript, Tailwind CSS, Framer Motion and Three.js. The dark editorial design combines a procedural orbital sculpture, scroll-driven transitions, restrained translucent panels and a data-driven 3D graph. All workspace records are fetched from the backend; the landing sphere is decorative geometry.
+React + TypeScript, Tailwind CSS, Framer Motion and Three.js. The immersive cockpit combines self-hosted orbital artwork, a procedural orbital sculpture, glowing translucent panels and a data-driven 3D graph. All workspace records are fetched from the backend; the landing sphere is decorative geometry.
 
 ## Install and run
 
@@ -23,7 +23,7 @@ npm run build
 npm audit --audit-level=moderate
 ```
 
-`npm run preview` serves the compiled static assets only. It does not configure a production API proxy; use the development server for local full-stack work or the configured Vercel rewrite for deployed builds.
+`npm run preview -- --port 4173` serves the production build and proxies `/api` using `API_PROXY_TARGET`, just like the dev server. Add the preview origin to backend `ALLOWED_ORIGINS` before testing authenticated mutations. Run `npm run smoke -- http://127.0.0.1:4173` for read-only routing and health checks.
 
 Three.js is intentionally lazy loaded. The graph's force layout runs in a Web Worker. The desktop sidebar collapses to an off-canvas navigation on mobile. Reduced-motion preferences disable ambient rotation and animation. The entity-list view supplies keyboard navigation and a WebGL fallback.
 
@@ -70,3 +70,5 @@ The command-center radar uses actual graph records. Operations show worker check
 If a browser tab outlives a deployment and its lazy bundle is no longer available, the module boundary offers an explicit reload notice. It does not silently reload while the operator is editing text.
 
 The research channel handles `reset` frames during a bounded citation-repair pass, replacing the provisional draft while retaining measured stream-event totals. The trace reports the repair and only marks the answer committed after the server's persistence event.
+
+See [../INSTALL.md](../INSTALL.md) for all environment variables. `src/immersive.css` and `src/components/Atmosphere.tsx` supply shared cockpit surfaces and the persistent Immersive/Focus toggle. `public/images/orbital-cockpit.jpg` is decorative AI-generated artwork, compressed and served locally under the existing CSP. It represents no application data.

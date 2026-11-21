@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -10,7 +10,9 @@ import {
   LockKeyhole,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { post } from "./api";
+import { api, post } from "./api";
+import { AppearanceToggle } from "./components/Atmosphere";
+import { workspaceDestination } from "./navigation";
 import type { User } from "./types";
 import { ErrorBox, Logo, Spinner } from "./components/UI";
 
@@ -22,6 +24,13 @@ export default function Auth() {
     [visible, setVisible] = useState(false);
   const client = useQueryClient(),
     navigate = useNavigate();
+  const destination = workspaceDestination(params.get("next"));
+  const session = useQuery({
+    queryKey: ["me"],
+    queryFn: () => api<User>("/auth/me"),
+    retry: false,
+  });
+  if (session.data) return <Navigate to={destination} replace />;
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -34,7 +43,7 @@ export default function Auth() {
       );
       client.clear();
       client.setQueryData(["me"], user);
-      navigate("/app", { replace: true });
+      navigate(destination, { replace: true });
     } catch (e) {
       setError(e);
     } finally {
@@ -43,16 +52,14 @@ export default function Auth() {
   }
   return (
     <main className="auth-page">
+      <div className="auth-appearance">
+        <AppearanceToggle />
+      </div>
       <Link to="/" className="auth-back">
         <ArrowLeft size={16} /> Back to KnowSphere
       </Link>
       <div className="auth-art" aria-hidden="true">
-        <div className="auth-rings">
-          <i />
-          <i />
-          <i />
-          <i />
-        </div>
+        <span className="auth-art-tag">KNOWSPHERE / ORBITAL INTELLIGENCE</span>
         <div className="auth-art-copy">
           <div className="eyebrow">OPERATOR ACCESS / KNOWSPHERE</div>
           <h2>
@@ -84,71 +91,104 @@ export default function Auth() {
         <div className="auth-switch">
           <button
             className={!registering ? "active" : ""}
+            disabled={busy}
+            aria-pressed={!registering}
             onClick={() => {
-              setParams({});
+              const next = new URLSearchParams(params);
+              next.delete("mode");
+              setParams(next);
               setError(null);
+              setVisible(false);
             }}
           >
             Sign in
           </button>
           <button
             className={registering ? "active" : ""}
+            disabled={busy}
+            aria-pressed={registering}
             onClick={() => {
-              setParams({ mode: "register" });
+              const next = new URLSearchParams(params);
+              next.set("mode", "register");
+              setParams(next);
               setError(null);
+              setVisible(false);
             }}
           >
             Create account
           </button>
         </div>
-        <form onSubmit={submit} className="form-stack">
-          {registering && (
+        {params.has("expired") && (
+          <p className="notice" role="status">
+            Your session expired. Sign in to resume your research.
+          </p>
+        )}
+        <form
+          key={registering ? "register" : "login"}
+          onSubmit={submit}
+          className="form-stack"
+          aria-busy={busy}
+        >
+          <fieldset disabled={busy} className="auth-fields">
+            {registering && (
+              <label>
+                Your name
+                <input
+                  name="name"
+                  autoComplete="name"
+                  placeholder="How should we call you?"
+                  required
+                  maxLength={80}
+                />
+              </label>
+            )}
             <label>
-              Your name
+              Email address
               <input
-                name="name"
-                autoComplete="name"
-                placeholder="How should we call you?"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
                 required
-                maxLength={80}
+                maxLength={254}
               />
             </label>
-          )}
-          <label>
-            Email address
-            <input
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              required
-              maxLength={254}
-            />
-          </label>
-          <label>
-            Password
-            <div className="password-input">
-              <input
-                name="password"
-                type={visible ? "text" : "password"}
-                autoComplete={registering ? "new-password" : "current-password"}
-                placeholder={
-                  registering ? "At least 12 characters" : "Enter your password"
-                }
-                minLength={12}
-                maxLength={128}
-                required
-              />
-              <button
-                type="button"
-                className="icon-button"
-                aria-label={visible ? "Hide password" : "Show password"}
-                onClick={() => setVisible(!visible)}
-              >
-                {visible ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
-            </div>
-          </label>
+            <label>
+              Password
+              <div className="password-input">
+                <input
+                  name="password"
+                  type={visible ? "text" : "password"}
+                  autoComplete={
+                    registering ? "new-password" : "current-password"
+                  }
+                  placeholder={
+                    registering
+                      ? "At least 12 characters"
+                      : "Enter your password"
+                  }
+                  minLength={12}
+                  maxLength={128}
+                  required
+                />
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={visible ? "Hide password" : "Show password"}
+                  aria-pressed={visible}
+                  onClick={() => setVisible(!visible)}
+                >
+                  {visible ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </label>
+            {registering && (
+              <p className="small-print">
+                Use 12–128 characters. A unique passphrase keeps your sources
+                protected.
+              </p>
+            )}
+          </fieldset>
           {!!error && <ErrorBox error={error} />}
           <button
             type="submit"

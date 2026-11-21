@@ -54,3 +54,9 @@ Answers use `OPENROUTER_REASONING=false` and the free-only `OPENROUTER_FALLBACKS
 ## Cockpit hosted acceptance
 
 The cockpit release completed its live two-passage ingestion, persisted checkpoint recovery, 21-entity/20-relationship graph, durable event replay and natural-question retrieval checks. A cited answer streamed 244 real provider token events and persisted its two citations through the Vercel → Railway → Neon path. See the final cockpit section of `VERIFICATION.md` for evidence and the provider fixes identified by live testing.
+
+## Database recovery and orbital cockpit — 21 November 2026
+
+Production readiness was initially unavailable because the previous Neon database reported quota exhaustion. A replacement connection supplied by the owner was applied to **both** API and worker service variables; both redeployed successfully and readiness returned HTTP 200. Credentials remain in Railway. Changing the database URL does not move historical data from the previous database.
+
+The replacement backend completed actual hosted upload, extraction, graph export, SSE, cited chat persistence and session-revocation checks. All disposable verification records were removed. See the dated section of [VERIFICATION.md](VERIFICATION.md) for measured results, and [INSTALL.md](INSTALL.md) for local/database setup and the read-only deployment smoke command.

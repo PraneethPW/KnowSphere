@@ -159,3 +159,7 @@ Extraction uses strict JSON Schema output and routes only to endpoints accepting
 Natural-language questions use the precise indexed search first. If no passage matches all searchable terms, retrieval broadens the escaped/stemmed PostgreSQL terms into a ranked OR query before graph expansion. Empty or unrelated queries still return no context. This is lexical retrieval with graph expansion, not vector/semantic search.
 
 Cited research streams allow one genuine model revision when the first completed draft has missing or invalid inline source references. The same retrieved passages are used; the server never invents citation markers. `stage:repairing` and `reset` frames tell the browser to replace the draft with the revision. Both attempts share a 150-second deadline, and only a response passing citation validation is persisted. A second invalid response remains an explicit failure.
+
+## Local database and workspace management
+
+See [../INSTALL.md](../INSTALL.md) for the loopback Docker PostgreSQL option, complete environment table and fresh-clone commands. `PATCH /api/spaces/{space_id}` renames an authenticated owner’s space; whitespace-only names are rejected. Database pool exhaustion returns HTTP 503 with a retry hint instead of a generic internal error.

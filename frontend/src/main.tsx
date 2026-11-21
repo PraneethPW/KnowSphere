@@ -4,8 +4,10 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MotionConfig } from "framer-motion";
 import App from "./App";
+import { AppearanceProvider } from "./components/Atmosphere";
 import "./styles.css";
 import "./cockpit.css";
+import "./immersive.css";
 
 const client = new QueryClient({
   defaultOptions: {
@@ -17,7 +19,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={client}>
       <BrowserRouter>
         <MotionConfig reducedMotion="user">
-          <App />
+          <AppearanceProvider><App /></AppearanceProvider>
         </MotionConfig>
       </BrowserRouter>
     </QueryClientProvider>

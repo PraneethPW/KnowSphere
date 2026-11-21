@@ -25,6 +25,7 @@ import {
   useToast,
 } from "../components/UI";
 import { useWorkspace } from "../Workspace";
+import RenameSpace from "../components/RenameSpace";
 
 export function useOverview() {
   const { space } = useWorkspace();
@@ -345,6 +346,7 @@ export function SettingsPage() {
           >
             Sign out of all sessions <ArrowUpRight size={15} />
           </button>
+          <RenameSpace />
         </section>
         <section className="panel">
           <div className="panel-heading">

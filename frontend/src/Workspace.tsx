@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import {
   NavLink,
+  Link,
   Route,
   Routes,
   useLocation,
@@ -29,7 +30,14 @@ import {
 import { motion } from "framer-motion";
 import { api, post } from "./api";
 import type { Space, SystemInfo, User } from "./types";
-import { ErrorBox, Logo, Modal, Spinner, useToast } from "./components/UI";
+import {
+  Empty,
+  ErrorBox,
+  Logo,
+  Modal,
+  Spinner,
+  useToast,
+} from "./components/UI";
 import { Overview, Insights, SettingsPage } from "./pages/Dashboard";
 import Library from "./pages/Library";
 import GraphPage from "./pages/Graph";
@@ -38,6 +46,7 @@ import Operations from "./pages/Operations";
 import { LiveProvider } from "./live";
 import { Connection, Telemetry } from "./components/Telemetry";
 import SearchConsole from "./components/SearchConsole";
+import { AppearanceToggle } from "./components/Atmosphere";
 
 type WorkspaceContextType = {
   space: Space;
@@ -56,9 +65,13 @@ const navItems = [
 ];
 
 export default function Workspace({ user }: { user: User }) {
-  const [selected, setSelected] = useState(
-    () => localStorage.getItem("ks:space") || "",
-  );
+  const [selected, setSelected] = useState(() => {
+    try {
+      return localStorage.getItem(`ks:space:${user.id}`) || "";
+    } catch {
+      return "";
+    }
+  });
   const [creating, setCreating] = useState(false),
     [spaceMenu, setSpaceMenu] = useState(false),
     [mobile, setMobile] = useState(false);
@@ -100,8 +113,12 @@ export default function Workspace({ user }: { user: User }) {
     setMobile(false);
   }, [location.pathname]);
   useEffect(() => {
-    if (space) localStorage.setItem("ks:space", space.id);
-  }, [space]);
+    try {
+      if (space) localStorage.setItem(`ks:space:${user.id}`, space.id);
+    } catch {
+      /* Storage is optional. */
+    }
+  }, [space, user.id]);
   useEffect(() => {
     const shortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
@@ -140,7 +157,9 @@ export default function Workspace({ user }: { user: User }) {
   }
   const page =
     navItems.find((n) => n.to === location.pathname)?.label ||
-    "Workspace settings";
+    (location.pathname === "/app/settings"
+      ? "System control"
+      : "Module not found");
   if (spaces.isPending)
     return (
       <div className="full-loader">
@@ -307,8 +326,10 @@ export default function Workspace({ user }: { user: User }) {
                 <strong>{page}</strong>
               </div>
               <div className="header-right">
+                <AppearanceToggle />
                 <button
                   className="search-shortcut"
+                  aria-label="Search console"
                   onClick={() => setSearchOpen(true)}
                 >
                   <Search size={14} /> <span>Search console</span>
@@ -354,7 +375,23 @@ export default function Workspace({ user }: { user: User }) {
                   <Route path="chat" element={<ChatPage />} />
                   <Route path="insights" element={<Insights />} />
                   <Route path="settings" element={<SettingsPage />} />
-                  <Route path="*" element={<Overview />} />
+                  <Route
+                    path="*"
+                    element={
+                      <div className="panel">
+                        <Empty
+                          icon={<Crosshair size={36} />}
+                          title="Module not found"
+                          description="This workspace address is unavailable. Choose a module in navigation or return to command center."
+                          action={
+                            <Link className="button button-primary" to="/app">
+                              Command center
+                            </Link>
+                          }
+                        />
+                      </div>
+                    }
+                  />
                 </Routes>
               </motion.div>
             </main>

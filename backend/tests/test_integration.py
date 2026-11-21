@@ -265,3 +265,34 @@ async def test_citation_revision_persists_only_valid_final_answer(client, monkey
     else:
         assert "event: error" in r.text and "event: done" not in r.text
     assert not (await db.one("SELECT run_token FROM knowsphere.conversations"))["run_token"]
+
+
+async def test_rename_space_is_validated_and_owner_scoped(client):
+    space = await register(client)
+    r = await client.patch(f"/api/spaces/{space}", json={"name": "  Research cockpit  "})
+    assert r.status_code == 200 and r.json()["name"] == "Research cockpit"
+    assert (await client.get("/api/spaces")).json()[0]["name"] == "Research cockpit"
+
+    assert (await client.patch(f"/api/spaces/{space}", json={"name": "   "})).status_code == 422
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://localhost", headers=dict(client.headers)
+    ) as other:
+        await register(other, "rename-attacker@example.com")
+        assert (await other.patch(f"/api/spaces/{space}", json={"name": "Hijacked"})).status_code == 404
+    assert (await client.get("/api/spaces")).json()[0]["name"] == "Research cockpit"
+
+
+async def test_database_exhaustion_has_retryable_service_error(client, monkeypatch):
+    from psycopg_pool import PoolTimeout
+
+    async def unavailable(*args, **kwargs):
+        raise PoolTimeout("isolated test fixture")
+
+    monkeypatch.setattr(db, "one", unavailable)
+    response = await client.post(
+        "/api/auth/login", json={"email": "owner@example.com", "password": "A-test-only-password-1234"}
+    )
+    assert response.status_code == 503
+    assert response.headers["retry-after"] == "15"
+    assert "temporarily unavailable" in response.json()["detail"]
+    assert "isolated test fixture" not in response.text

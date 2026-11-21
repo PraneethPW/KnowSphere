@@ -11,6 +11,7 @@ import { ErrorBox, Spinner, ToastContext } from "./components/UI";
 
 const Workspace = lazy(() => import("./Workspace"));
 function Protected() {
+  const location = useLocation();
   const query = useQuery({
     queryKey: ["me"],
     queryFn: () => api<User>("/auth/me"),
@@ -23,7 +24,12 @@ function Protected() {
       </div>
     );
   if (query.error instanceof ApiError && query.error.status === 401)
-    return <Navigate to="/auth" replace />;
+    return (
+      <Navigate
+        to={`/auth?next=${encodeURIComponent(location.pathname + location.search)}`}
+        replace
+      />
+    );
   if (query.error)
     return (
       <div className="full-loader">
@@ -61,7 +67,10 @@ export default function App() {
   useEffect(() => {
     const expired = () => {
       client.clear();
-      window.location.assign("/auth");
+      const next = window.location.pathname + window.location.search;
+      window.location.assign(
+        `/auth?expired=1&next=${encodeURIComponent(next)}`,
+      );
     };
     window.addEventListener("knowsphere:expired", expired);
     return () => window.removeEventListener("knowsphere:expired", expired);
@@ -74,6 +83,20 @@ export default function App() {
   useEffect(() => {
     if (!location.hash) window.scrollTo({ top: 0 });
   }, [location.pathname, location.hash]);
+  useEffect(() => {
+    const titles: Record<string, string> = {
+      "/": "Knowledge Command",
+      "/auth": "Operator access",
+      "/app": "Command center",
+      "/app/graph": "Tactical graph",
+      "/app/library": "Source hangar",
+      "/app/chat": "Intelligence comms",
+      "/app/operations": "Live operations",
+      "/app/insights": "Graph analysis",
+      "/app/settings": "System control",
+    };
+    document.title = `KnowSphere — ${titles[location.pathname] || "Page not found"}`;
+  }, [location.pathname]);
   return (
     <ToastContext.Provider value={setToast}>
       <Routes>

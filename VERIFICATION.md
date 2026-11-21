@@ -91,3 +91,29 @@ Final automated checks: **19 backend tests and 5 frontend tests pass**, includin
 Citation quality hardening: a later browser request exposed a model answer without inline reference markers. Such drafts remain unsaved. The request now permits one genuine AI revision against the same source context, with explicit repair/reset events; both passes share a 150-second deadline. Isolated database tests cover successful repair (only the valid final answer persists), repeated invalid output (no assistant answer persists), stream reset framing and release of the generation lease.
 
 Final hosted recheck (`d97fabe`): the production API streamed 94 actual token events with two citations in 10,959 ms. The final browser question independently committed its cited answer, showed 83 stream events and 13.4 seconds in the research trace, opened both source citations and retained the answer after a full reload. Search opened with keyboard focus in its input. The temporary verification account and all of its cascading source/graph/conversation/session data were then removed; the screenshot data came from this real verification workflow. No demonstration records remain in the application.
+
+## Orbital cockpit verification — 21 November 2026
+
+Fresh-clone checks were run from this repository using Node 24, Python 3.12 and a separate local PostgreSQL cluster. No production database was used by destructive integration tests.
+
+- Frontend: 9 tests passed; TypeScript and Vite production build passed; npm audit reported zero vulnerabilities. Three.js remains lazy loaded and produces the existing large-chunk advisory.
+- Backend: 21 tests passed against a disposable local `knowsphere_test` database. Ruff lint and formatting passed. Added coverage for owner-only space renaming, invalid names, database pool exhaustion, split CRLF stream packets, expired streamed sessions and safe sign-in destinations.
+- Infrastructure: `.railway` TypeScript check passed. Compose configuration validated; actual local runtime used native PostgreSQL rather than Docker.
+- Local runtime: migrated a separate development database; ran the API, worker and Vite server; all 14 read-only smoke checks passed on dev port 5173 and production-preview port 4173.
+- Browser: inspected landing, sign-in, registration, command center, operations, graph, source library, chat, analysis and settings at desktop and mobile sizes. Verified protected upload deep-link restoration, space renaming, mobile navigation/search/sign-out, persistent focus mode, 16px auth inputs, no horizontal overflow on checked pages and no browser console errors during workspace navigation.
+
+The initial public API readiness check returned 503. Railway runtime logs identified Neon quota exhaustion. The owner supplied a replacement database URL, which was applied to both Railway services without writing it into the repository. Both services redeployed, migrations completed and public readiness returned 200. This changes the active database; it does not migrate historical records from the previous database.
+
+A disposable account then exercised the actual public Vercel → Railway → Neon → OpenRouter path:
+
+1. Registered with a Secure, HttpOnly first-party session; the new graph was empty.
+2. Confirmed the hosted worker was online and AI was configured.
+3. Uploaded a factual UTF-8 architecture description through the hosted file parser.
+4. The cloud worker completed real inference and persisted **8 entities and 7 relationships**.
+5. Retrieved its original passage, exported the graph and received SSE ready/heartbeat frames.
+6. Streamed a real answer from `dots-studio/dots-3-note-preview:free`, with **1 source citation and 2 provider token events**, then reloaded the persisted two-message conversation.
+7. Revoked sessions and confirmed HTTP 401. Removed the disposable verification account and cascaded records using its exact generated ID and email.
+
+This records functional verification, not a claim that every possible input, traffic level or upstream failure has been exhaustively tested. Email password reset/verification, OAuth, OCR and team sharing remain outside the implemented application. No simulated AI or demo records were added.
+
+Repeat public release smoke checks from `frontend` with `npm run smoke -- https://knowsphere-ai-praneethpw.vercel.app`. Follow [INSTALL.md](INSTALL.md) for reproducible installation and the full environment-variable table.

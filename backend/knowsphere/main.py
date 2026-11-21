@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from psycopg.errors import UniqueViolation
 from psycopg.types.json import Jsonb
+from psycopg_pool import PoolTimeout
 from pydantic import BaseModel, EmailStr, Field
 
 from . import ai, db, discovery
@@ -82,6 +83,16 @@ async def boundary(request: Request, call_next):
             return JSONResponse({"detail": "Request body is too large."}, status_code=413)
     try:
         response = await call_next(request)
+    except PoolTimeout:
+        log.error("Request %s could not acquire a database connection", request_id)
+        response = JSONResponse(
+            {
+                "detail": "The database is temporarily unavailable. Please try again shortly.",
+                "request_id": request_id,
+            },
+            status_code=503,
+            headers={"Retry-After": "15"},
+        )
     except Exception as exc:
         log.error("Request %s failed (%s)", request_id, type(exc).__name__)
         response = JSONResponse(
@@ -238,6 +249,18 @@ async def space_overview(space_id: uuid.UUID, user: User):
     return await discovery.overview(space_id)
 
 
+@app.patch("/api/spaces/{space_id}")
+async def rename_space(space_id: uuid.UUID, body: SpaceBody, user: User):
+    await owned_space(space_id, user)
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(422, "Space name cannot be empty.")
+    return await db.one(
+        "UPDATE knowsphere.spaces SET name=%s WHERE id=%s AND owner_id=%s RETURNING id,name,created_at",
+        (name, space_id, user["id"]),
+    )
+
+
 @app.get("/api/spaces/{space_id}/documents")
 async def documents(space_id: uuid.UUID, user: User):
     await owned_space(space_id, user)
@@ -339,7 +362,7 @@ async def upload(space_id: uuid.UUID, file: UploadFile, user: User):
     try:
         data = await file.read(settings().max_upload_bytes + 1)
         if len(data) > settings().max_upload_bytes:
-            raise HTTPException(413, "Files are limited to 10 MB.")
+            raise HTTPException(413, f"Files are limited to {settings().max_upload_bytes / 1_000_000:g} MB.")
         content, format = await parse_isolated(data, file.filename or "", settings().max_document_chars)
     except (ValueError, TimeoutError) as exc:
         raise HTTPException(422, str(exc) or "File parsing timed out.") from exc

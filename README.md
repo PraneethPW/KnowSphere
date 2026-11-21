@@ -81,61 +81,17 @@ flowchart LR
 
 No paper was supplied. This is an independently implemented graph-assisted retrieval architecture, not a claimed reproduction of a specific research paper. No model training, vector embeddings, semantic similarity engine, or OCR is asserted. Graph algorithms supply useful discovery without an extra model service. The decorative landing-page reactor is procedural artwork, not a preview of stored knowledge.
 
-## Project location and Git
+## Install and run locally
 
-The local project is at `/Users/praneethreddy/Freelance Projects /KnowSphere-AI`. The existing parent folder has a trailing space in its name; preserve it when using an absolute shell path. From your current `Freelance Projects` terminal, simply run `cd KnowSphere-AI`.
+Follow [INSTALL.md](INSTALL.md) for fresh-clone installation, Docker or native PostgreSQL, every environment variable, API/worker/frontend commands, and deployment checks.
 
-The project is connected to `PraneethPW/KnowSphere` on `main`. The private `backend/.env`, virtual environment, Node dependencies and build output are ignored. To push an intentional change from the local project:
+Templates are tracked at [`.env.example`](.env.example), [`backend/.env.example`](backend/.env.example), and [`frontend/.env.example`](frontend/.env.example). No private environment files are included. Copy each template into its own directory as `.env`; never commit actual credentials.
 
-```bash
-git add .
-git commit -m "Describe your change"
-git push -u origin main
-```
+## Orbital cockpit update
 
-If Git requests an author identity, configure your own name and email locally before committing. The repository is already connected to Railway and Vercel; the folder-specific guides also explain how to reproduce the deployment.
+Self-hosted cinematic 3D background artwork now continues across landing, operator access, command center and every workspace module. Shared glowing panels, legible controls, keyboard focus, mobile layouts and a persistent Immersive/Focus toggle keep the application consistent. The interactive 3D graph still uses actual source-backed records.
 
-## Local installation
-
-Requirements: Node.js 22.12+ (24 recommended), Python 3.12, and a Neon PostgreSQL connection. Use a separate Neon branch for development if this database also serves production.
-
-### 1. Configure and migrate the backend
-
-```bash
-cd backend
-python3.12 -m venv .venv
-source .venv/bin/activate
-python -m pip install --require-hashes -r requirements-dev.lock
-cp -n .env.example .env
-chmod 600 .env
-```
-
-Edit `backend/.env` privately. Set `DATABASE_URL` to your Neon connection string (keep `sslmode=require` or stronger) and `OPENROUTER_API_KEY` to your OpenRouter key. Keep these secrets out of the frontend. The supplied local checkout has already been configured from the credentials supplied during development; downloadable source archives exclude that file.
-
-```bash
-python -m knowsphere.migrate
-python -m uvicorn knowsphere.main:app --host 127.0.0.1 --port 8000
-```
-
-### 2. Start the ingestion worker in a second terminal
-
-```bash
-cd backend
-source .venv/bin/activate
-python -m knowsphere.worker
-```
-
-The worker is required for ingestion. The API deliberately does not launch an unreliable in-process background queue.
-
-### 3. Start the frontend in a third terminal
-
-```bash
-cd frontend
-npm ci
-npm run dev
-```
-
-Open <http://localhost:5173>. Create your own account, add a source, wait for its real ingestion status to become **Ready**, explore the graph, then ask a question about a named topic in that source. The frontend development proxy forwards `/api` to `http://127.0.0.1:8000`.
+Sign-in resumes protected deep links. Expired chat sessions redirect consistently. Source ingestion reflects configured limits, upload dialogs reopen correctly, preview builds proxy the API, and Settings supports renaming the current mission space.
 
 ## Verification
 

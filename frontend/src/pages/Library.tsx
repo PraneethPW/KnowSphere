@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { api, post } from "../api";
-import type { Document, SourceDocument } from "../types";
+import type { Document, SourceDocument, SystemInfo } from "../types";
 import {
   date,
   Empty,
@@ -83,10 +83,17 @@ function AddSource({ onClose }: { onClose: () => void }) {
     [error, setError] = useState<unknown>(null),
     [chars, setChars] = useState(0);
   const input = useRef<HTMLInputElement>(null);
+  const system = useQuery({
+    queryKey: ["system"],
+    queryFn: () => api<SystemInfo>("/system"),
+  });
+  const maxBytes = system.data?.limits.upload_bytes ?? 10_000_000;
+  const maxChars = system.data?.limits.document_characters ?? 120_000;
   function selectFile(selected: File | undefined) {
-    if (!selected) return;
-    if (selected.size > 10_000_000) {
-      setError(new Error("Files are limited to 10 MB."));
+    if (!selected || busy) return;
+    setFile(null);
+    if (selected.size > maxBytes) {
+      setError(new Error(`Files are limited to ${maxBytes / 1_000_000} MB.`));
       return;
     }
     if (!/\.(pdf|txt|md|csv)$/i.test(selected.name)) {
@@ -198,13 +205,15 @@ function AddSource({ onClose }: { onClose: () => void }) {
                   <UploadCloud size={36} />
                   <strong>Drop a document here</strong>
                   <span>or click to browse your files</span>
-                  <small>PDF, TXT, MD, CSV · Up to 10 MB</small>
+                  <small>
+                    PDF, TXT, MD, CSV · Up to {maxBytes / 1_000_000} MB
+                  </small>
                 </>
               )}
             </button>
             <p className="small-print">
-              Up to 120,000 characters of text per source. Scanned PDFs need OCR
-              before upload.
+              Up to {number(maxChars)} characters of text per source. Scanned
+              PDFs need OCR before upload.
             </p>
           </>
         ) : (
@@ -225,14 +234,14 @@ function AddSource({ onClose }: { onClose: () => void }) {
                 name="content"
                 rows={9}
                 minLength={40}
-                maxLength={120000}
+                maxLength={maxChars}
                 required
                 placeholder="Paste the passage you want to understand…"
                 onChange={(e) => setChars(e.target.value.length)}
                 disabled={busy}
               />
               <span className="character-count">
-                {number(chars)} / 120,000 characters
+                {number(chars)} / {number(maxChars)} characters
               </span>
             </label>
           </>
@@ -264,7 +273,7 @@ export default function Library() {
     client = useQueryClient(),
     toast = useToast();
   const [params, setParams] = useSearchParams(),
-    [adding, setAdding] = useState(params.has("add")),
+    [adding, setAdding] = useState(false),
     [remove, setRemove] = useState<Document | null>(null);
   const [filter, setFilter] = useState("all"),
     [search, setSearch] = useState("");
@@ -507,7 +516,16 @@ export default function Library() {
           knowledge space.
         </span>
       </div>
-      {adding && <AddSource onClose={() => setAdding(false)} />}
+      {(adding || params.has("add")) && (
+        <AddSource
+          onClose={() => {
+            setAdding(false);
+            const next = new URLSearchParams(params);
+            next.delete("add");
+            setParams(next, { replace: true });
+          }}
+        />
+      )}
       {params.get("document") && (
         <SourceModal
           id={params.get("document")!}

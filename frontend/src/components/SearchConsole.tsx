@@ -64,6 +64,9 @@ export default function SearchConsole({ onClose }: { onClose: () => void }) {
         />
       ) : (
         <>
+          {graph.error && (
+            <ErrorBox error={graph.error} retry={() => void graph.refetch()} />
+          )}
           {entities.length > 0 && (
             <div className="search-entities">
               <span className="eyebrow">ENTITIES</span>

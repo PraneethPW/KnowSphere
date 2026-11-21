@@ -6,6 +6,7 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsType } from "three-stdlib";
 import type { GraphLink, GraphNode } from "../types";
 import { KIND_COLORS } from "../types";
+import { useAppearance } from "./Atmosphere";
 
 function Scene({
   nodes,
@@ -33,6 +34,7 @@ function Scene({
     controls = useRef<OrbitControlsType>(null);
   const reduced = useReducedMotion(),
     { camera, size } = useThree();
+  const { immersive } = useAppearance();
   useEffect(() => {
     const radius =
       Math.max(2, ...Array.from(positions.values(), (p) => Math.hypot(...p))) +
@@ -58,7 +60,7 @@ function Scene({
     };
   }, [hovered]);
   useFrame((_, delta) => {
-    if (group.current && !selected && !reduced && !hovered)
+    if (group.current && !selected && !reduced && !hovered && immersive)
       group.current.rotation.y += Math.min(delta, 0.05) * 0.015;
   });
   const linePositions = useMemo(() => {
@@ -199,6 +201,8 @@ export default function GraphScene(props: {
   fresh: Set<string>;
   path: string[];
 }) {
+  const reduced = useReducedMotion();
+  const { immersive } = useAppearance();
   const [positions, setPositions] = useState<
     Map<string, [number, number, number]>
   >(new Map());
@@ -234,6 +238,7 @@ export default function GraphScene(props: {
       aria-label={`Interactive 3D graph with ${props.nodes.length} entities. Use the entity list for keyboard navigation.`}
     >
       <Canvas
+        frameloop={reduced || !immersive ? "demand" : "always"}
         camera={{ position: [0, 0, 25], fov: 45 }}
         dpr={[1, 1.5]}
         gl={{ antialias: true }}
