@@ -16,3 +16,7 @@ playwright-report/
 *.log
 
 *.tsbuildinfo
+
+# Downloaded pinned ML weights; prepare from the tracked manifest.
+backend/models/
+backend/evaluation/data/

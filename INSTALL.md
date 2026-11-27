@@ -33,11 +33,14 @@ On Windows, use `py -3.12 -m venv .venv` and `.venv\Scripts\Activate.ps1`. File 
 The template already points to the Compose database. Set `OPENROUTER_API_KEY` privately in `backend/.env` to enable real ingestion and answers. Without a key, account creation, navigation and empty workspaces work; AI actions return an explicit configuration error. There is no demo data or simulated AI.
 
 ```bash
+python -m knowsphere.prepare_ml
 python -m knowsphere.migrate
 python -m uvicorn knowsphere.main:app --host 127.0.0.1 --port 8000
 ```
 
 Keep this terminal open. API documentation: <http://127.0.0.1:8000/api/docs>. Readiness: <http://127.0.0.1:8000/api/health/ready>.
+
+The model preparer downloads and verifies the pinned local MiniLM reranker (about 24 MB). Reranking runs on CPU; no GPU, training, or separate model server is needed. Existing OpenRouter configuration is still required for extraction and generated answers. Model weights are excluded from source archives and must be prepared once after installation. See [ML evaluation and limits](backend/evaluation/README.md).
 
 ## 3. Start the worker
 
@@ -89,6 +92,9 @@ Open <http://127.0.0.1:5173>. Use one hostname consistently so your session cook
 | `backend/.env` | `MAX_DOCUMENTS_PER_SPACE`, `MAX_SPACES_PER_USER` | Account resource quotas |
 | `backend/.env` | `WORKER_POLL_SECONDS` | Durable queue poll interval |
 | `backend/.env` | `LOG_LEVEL` | Application logging level |
+| `backend/.env` | `ML_ENABLED` | Enable local neural relevance ranking (default `true`) |
+| `backend/.env` | `ML_CANDIDATES`, `ML_THREADS` | Candidate budget (12–64) and CPU threads (1–4); defaults 32 and 2 |
+| `backend/.env` | `ML_MODEL_DIR` | Optional custom directory containing the prepared verified model |
 
 Never put secrets in `VITE_*` variables: these become public browser code. Free models can be retired or rate-limited; choose currently available free IDs if a provider rejects the configured model.
 
@@ -157,6 +163,8 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for project details. A successful Vercel buil
 | Login repeatedly disappears locally | Keep `COOKIE_SECURE=false` for HTTP and use the same browser hostname |
 | Upload stays queued | Start the worker against the same database; inspect Settings & status |
 | AI returns 503 | Configure `OPENROUTER_API_KEY` on the API and worker |
+| API startup reports missing/corrupt neural model | Activate the backend virtual environment and run `python -m knowsphere.prepare_ml`; check `ML_MODEL_DIR` if customized |
+| Neural ranking returns busy/503 | Retry shortly; check API CPU/memory and concurrency before increasing candidate or thread counts |
 | AI fails/retries | Inspect the recorded error, free-model access and provider quota |
 | `/api` returns HTML | Repair the Vercel rewrite or local proxy; run the smoke command |
 | PDF contains no extractable text | Run OCR separately, then upload the text |

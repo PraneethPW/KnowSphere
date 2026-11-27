@@ -60,3 +60,11 @@ The cockpit release completed its live two-passage ingestion, persisted checkpoi
 Production readiness was initially unavailable because the previous Neon database reported quota exhaustion. A replacement connection supplied by the owner was applied to **both** API and worker service variables; both redeployed successfully and readiness returned HTTP 200. Credentials remain in Railway. Changing the database URL does not move historical data from the previous database.
 
 The replacement backend completed actual hosted upload, extraction, graph export, SSE, cited chat persistence and session-revocation checks. All disposable verification records were removed. See the dated section of [VERIFICATION.md](VERIFICATION.md) for measured results, and [INSTALL.md](INSTALL.md) for local/database setup and the read-only deployment smoke command.
+
+## Local neural model release — 27 November 2026
+
+The backend Docker build downloads the pinned MiniLM INT8 artifacts and verifies their SHA-256 hashes. No model files, provider keys or document content are committed. The API loads the CPU model before becoming ready; startup fails explicitly if preparation or verification fails. The ingestion worker continues to use OpenRouter for extraction and does not load the reranker into memory.
+
+Defaults are `ML_ENABLED=true`, `ML_CANDIDATES=32`, `ML_THREADS=2`. An optional `ML_MODEL_DIR` must reference the prepared artifacts; omit it with the standard Docker image. An explicit `ML_ENABLED=false` selects legacy lexical retrieval and is reported in Settings. Runtime model errors return 503. Inference is serialized with at most four admitted jobs per API process, including the running job. Give the API CPU and memory headroom for ONNX inference; extra Uvicorn processes each load their own model. Benchmark memory includes evaluation tooling and must not be used as a hosting limit. Measure your own deployed workload.
+
+The frontend Settings page reads authenticated `/api/system` to display actual model readiness. After release, verify this status, source search, cited answers and the normal read-only deployment smoke checks. [Evaluation methodology and measured retrieval gains](backend/evaluation/README.md).

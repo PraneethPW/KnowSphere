@@ -36,6 +36,7 @@ The two application source folders are `frontend` and `backend` (the spelling is
 - OpenRouter free-model entity and relationship extraction with structured validation. Quotes must occur in their source chunk; unsupported model evidence is discarded. Each passage requests up to 16 entities and 20 relationships to bound free-model output; extraction is selective, not exhaustive.
 - Canonical entity resolution within a space, source-level relationship provenance, and deletion cascades that preserve entities still supported by other documents.
 - Interactive Three.js graph with orbit/zoom, labels, entity search, type/confidence filters, camera reset, fullscreen, a keyboard-accessible entity list, and source inspection.
+- Local checksum-verified MiniLM neural passage ranking on CPU, with exact source offsets and overlapping windows for long chunks. See [model setup and evaluation](backend/evaluation/README.md).
 - Graph-assisted full-text retrieval with ranked-term broadening for natural questions; true provider token streaming; cited answers; conversation persistence and deletion. One bounded AI revision can repair missing/invalid source references. An unfinished or uncited answer is never saved as a completed answer.
 - PageRank influence scores, Louvain community detection, and connected components computed from actual graph records.
 - Replayable server-sent events for live ingestion/graph updates, reconnects, expired-session handling, and periodic snapshot recovery.
@@ -61,7 +62,8 @@ Upload a document through **Launch ingestion**, open **Live operations** in a se
 | API | Python 3.12, FastAPI, Pydantic, psycopg async connection pool |
 | Database | Neon PostgreSQL; all tables are isolated in the `knowsphere` schema |
 | AI | OpenRouter Chat Completions; Configurable Dots 3 Note free models for answers/extraction, free-only failover and explicit reasoning controls; paid IDs rejected |
-| Retrieval | Indexed PostgreSQL full-text search, entity matches and one-hop graph evidence expansion |
+| Retrieval | Indexed PostgreSQL full-text search, entity matches, one-hop graph evidence expansion and local MiniLM neural reranking |
+| Local ML | Pinned INT8 MS MARCO MiniLM cross-encoder via ONNX Runtime CPU; no GPU or private-document training |
 | Graph analytics | NetworkX PageRank, Louvain and connected components |
 | Backend hosting | Railway: one API service and one continuously running worker |
 | Frontend hosting | Vercel: static Vite build with same-origin API rewrites to Railway |
@@ -79,7 +81,7 @@ flowchart LR
     A -->|SSE: progress and tokens| U
 ```
 
-No paper was supplied. This is an independently implemented graph-assisted retrieval architecture, not a claimed reproduction of a specific research paper. No model training, vector embeddings, semantic similarity engine, or OCR is asserted. Graph algorithms supply useful discovery without an extra model service. The decorative landing-page reactor is procedural artwork, not a preview of stored knowledge.
+No paper was supplied. This is an independently implemented graph-assisted retrieval architecture, not a claimed reproduction of a specific research paper. The local ML addition is a pretrained relevance reranker, not a model trained on your documents. No vector index, exhaustive semantic candidate search, or OCR is asserted. Graph algorithms supply useful discovery without an extra model service. The decorative landing-page reactor is procedural artwork, not a preview of stored knowledge.
 
 ## Install and run locally
 
@@ -135,7 +137,7 @@ The explicit placeholder above is setup documentation, never a runtime fallback.
 - Up to 10 MB and 120,000 extracted characters per source; up to 200 PDF pages, 200 documents per space and 10 spaces per account by default. HTTP proxies may impose smaller upload limits; verify the hosted path before advertising its maximum.
 - The interactive graph and analytics are bounded to 600 entities and 4,000 relationships. Export returns all ready graph records. Entity detail panels show at most 100 sources and 100 relationships.
 - Live events use a durable PostgreSQL event log with a two-second poll interval. Streams reconnect every 50 seconds to avoid proxy connection limits; a one-minute snapshot refresh repairs missed history. This is near-real-time, not a sub-millisecond guarantee.
-- Retrieval is lexical plus graph expansion. Synonyms without lexical/entity overlap may not retrieve the right passage; the API returns an explicit no-source result rather than inventing an answer.
+- Candidates come from lexical and graph expansion, then local MiniLM ranks their relevance. Synonyms without lexical/entity overlap may still miss the candidate pool; the API returns an explicit no-source result rather than inventing an answer.
 - A citation is provenance, not independent truth verification. Quote validation does not prove a relationship is correct. Review the original passage.
 - Saved conversations retain their answer and citation snapshots when an original document is deleted. Delete the conversation separately to remove those saved excerpts.
 - This release is for private individual workspaces. Team sharing, OAuth, email verification, password-reset email delivery, OCR, website crawling, billing and backups managed by the application are not implemented. There are no inactive buttons pretending to provide them.
@@ -148,3 +150,9 @@ The explicit placeholder above is setup documentation, never a runtime fallback.
 - [Neon connection setup](https://neon.com/docs/connect/connect-from-any-app)
 - [Vercel external rewrites](https://vercel.com/docs/routing/rewrites)
 - [Railway configuration as code](https://docs.railway.com/guides/config-as-code)
+
+## Local ML relevance model
+
+Install backend requirements, then run `python -m knowsphere.prepare_ml` from `backend` before starting the API. The Docker build performs this automatically. `ML_ENABLED=true`, `ML_CANDIDATES=32` and `ML_THREADS=2` are documented in `backend/.env.example`. Settings reports the loaded model; search results identify neural ranking. The model ranks original passages and preserves source evidence; it does not make generated answers infallible. See [reproducible public evaluation](backend/evaluation/README.md).
+
+On the complete **BEIR SciFact test split (300 queries, 5,183 abstracts)**, relevant-source Hit@1 increased from **23.00% to 51.67%** and Recall@8 from **47.89% to 62.64%** compared with the previous PostgreSQL pipeline. These measure retrieval relevance, not answer factuality or guaranteed performance on private documents. [Methodology, limitations and raw results](backend/evaluation/README.md#measured-results--27-november-2026).

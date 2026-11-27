@@ -17,6 +17,9 @@ const env = {
   REGISTRATION_ENABLED: "true",
   WORKER_POLL_SECONDS: "2",
   LOG_LEVEL: "INFO",
+  ML_ENABLED: "true",
+  ML_CANDIDATES: "32",
+  ML_THREADS: "2",
 };
 
 export default defineRailway(() => {

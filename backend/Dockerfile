@@ -6,6 +6,7 @@ RUN useradd --create-home --uid 10001 knowsphere
 COPY requirements.lock ./
 RUN pip install --require-hashes -r requirements.lock
 COPY --chown=knowsphere:knowsphere knowsphere ./knowsphere
+RUN python -m knowsphere.prepare_ml && chown -R knowsphere:knowsphere /app/models
 COPY --chown=knowsphere:knowsphere migrations ./migrations
 USER knowsphere
 EXPOSE 8000

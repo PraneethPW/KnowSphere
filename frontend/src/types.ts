@@ -81,6 +81,15 @@ export type SourceDocument = {
   status: string;
 };
 export type SystemInfo = {
+  ml?: {
+    enabled: boolean;
+    ready: boolean;
+    model: string;
+    revision: string;
+    quantization: string;
+    device: string;
+    candidates: number;
+  };
   database: string;
   ai_configured: boolean;
   extraction_model: string;
@@ -162,6 +171,10 @@ export type Operation = {
   verified_relationships: number;
 };
 export type SearchPassage = {
+  retrieval_model?: string;
+  relevance_score?: number;
+  match_start?: number;
+  match_end?: number;
   id: string;
   document_id: string;
   title: string;

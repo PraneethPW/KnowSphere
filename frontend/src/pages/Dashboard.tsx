@@ -324,6 +324,36 @@ export function SettingsPage() {
                     {system.data.worker}
                   </span>
                 </div>
+                {system.data.ml && (
+                  <div className="service-row">
+                    <div>
+                      <strong>Neural passage ranking</strong>
+                      <small>
+                        {system.data.ml.model}
+                        <br />
+                        {system.data.ml.device} · {system.data.ml.quantization}{" "}
+                        · up to {system.data.ml.candidates} candidates
+                      </small>
+                    </div>
+                    <span
+                      className={`service-state ${!system.data.ml.ready ? "offline" : ""}`}
+                    >
+                      <i />
+                      {!system.data.ml.enabled
+                        ? "Disabled"
+                        : system.data.ml.ready
+                          ? "Model ready"
+                          : "Unavailable"}
+                    </span>
+                  </div>
+                )}
+                {system.data.ml?.enabled && (
+                  <p className="small-print">
+                    MiniLM ranks relevant passages locally before answers are
+                    generated. Relevance scores do not establish factual
+                    correctness. Follow the original source evidence.
+                  </p>
+                )}
                 <p className="small-print">
                   Key presence does not verify provider access. Failed AI
                   requests appear in the library or conversation. Free-model

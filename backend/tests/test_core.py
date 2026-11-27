@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 from knowsphere.ai import Extraction
 from knowsphere.config import Settings
-from knowsphere.discovery import analyze, used_citations
+from knowsphere.discovery import analyze, citation_coverage_valid, used_citations
 from knowsphere.text import canonical, chunk_text, parse_upload, quote_present
 
 
@@ -114,3 +114,14 @@ def test_extraction_requires_relationship_confidence_and_rejects_extra_fields():
         Extraction.model_validate({"entities": [], "relationships": [relation]})
     with pytest.raises(ValidationError, match="Extra inputs"):
         Extraction.model_validate({"entities": [], "relationships": [], "invented": True})
+
+
+def test_every_answer_paragraph_needs_valid_source_coverage():
+    citations = [{"index": 1}, {"index": 2}]
+    assert citation_coverage_valid(
+        "## Summary\n\nStored in PostgreSQL [1].\n\nIndexed with a worker [2].", citations
+    )
+    assert not citation_coverage_valid("Stored in PostgreSQL [1].\n\nAn uncited additional claim.", citations)
+    assert not citation_coverage_valid("Paragraph [1].\n\nInvalid reference [999].", citations)
+    assert not citation_coverage_valid("No references.", citations)
+    assert not citation_coverage_valid("## Heading [1]", citations)

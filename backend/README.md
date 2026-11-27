@@ -163,3 +163,7 @@ Cited research streams allow one genuine model revision when the first completed
 ## Local database and workspace management
 
 See [../INSTALL.md](../INSTALL.md) for the loopback Docker PostgreSQL option, complete environment table and fresh-clone commands. `PATCH /api/spaces/{space_id}` renames an authenticated owner’s space; whitespace-only names are rejected. Database pool exhaustion returns HTTP 503 with a retry hint instead of a generic internal error.
+
+## Local neural relevance model
+
+After installing requirements, run `python -m knowsphere.prepare_ml` before the API. The pinned INT8 MiniLM reranker is loaded locally on CPU and verifies its SHA-256. Docker builds prepare it automatically. `ML_ENABLED`, `ML_CANDIDATES`, `ML_THREADS` and optional `ML_MODEL_DIR` control it. No private text is sent away for ranking. Existing OpenRouter calls still perform graph extraction and answer generation. Read [evaluation/README.md](evaluation/README.md) for exact source-window handling, public evaluation commands and measured limitations.

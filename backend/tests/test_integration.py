@@ -226,7 +226,12 @@ async def test_natural_question_retrieval_broadens_terms_without_inventing_conte
 
 
 @pytest.mark.parametrize("repair_succeeds", [True, False])
-async def test_citation_revision_persists_only_valid_final_answer(client, monkeypatch, repair_succeeds):
+@pytest.mark.parametrize(
+    "draft", ["Uncited draft [999].", "A cited opening [1].\n\nAn uncited second paragraph."]
+)
+async def test_citation_revision_persists_only_valid_final_answer(
+    client, monkeypatch, repair_succeeds, draft
+):
     from knowsphere import ai
     from knowsphere.config import settings
 
@@ -246,7 +251,7 @@ async def test_citation_revision_persists_only_valid_final_answer(client, monkey
         calls.append(prompt)
         yield {"model": "isolated-fixture:free"}
         if len(calls) == 1:
-            yield {"token": "Uncited draft [999]."}
+            yield {"token": draft}
         else:
             yield {
                 "token": "Neon stores documents in PostgreSQL [1]." if repair_succeeds else "Still uncited."
@@ -296,3 +301,37 @@ async def test_database_exhaustion_has_retryable_service_error(client, monkeypat
     assert response.headers["retry-after"] == "15"
     assert "temporarily unavailable" in response.json()["detail"]
     assert "isolated test fixture" not in response.text
+
+
+async def test_ml_search_has_real_model_status_source_offsets_and_owner_isolation(client, monkeypatch):
+    space = await register(client)
+    content = "Recover access to your account by requesting a password reset link at the sign-in page."
+    doc = await enqueue(space, "Access instructions", content, "text")
+    await db.execute("UPDATE knowsphere.documents SET status='ready' WHERE id=%s", (doc["id"],))
+    await db.execute(
+        "INSERT INTO knowsphere.chunks(document_id,ordinal,content,processed) VALUES (%s,0,%s,true)",
+        (doc["id"], content),
+    )
+    result = await client.get(f"/api/spaces/{space}/search?q=forgotten+password+access")
+    assert result.status_code == 200 and result.json()
+    row = result.json()[0]
+    assert row["document_id"] == str(doc["id"])
+    assert row["retrieval_model"] == "Xenova/ms-marco-MiniLM-L-6-v2"
+    assert row["content"] == content[row["match_start"] : row["match_end"]]
+    status = (await client.get("/api/system")).json()["ml"]
+    assert status["ready"] and status["enabled"] and status["device"] == "CPU"
+    async with httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://localhost", headers=dict(client.headers)
+    ) as other:
+        other_space = await register(other, "ml-other-owner@example.com")
+        assert (await other.get(f"/api/spaces/{space}/search?q=password")).status_code == 404
+        assert (await other.get(f"/api/spaces/{other_space}/search?q=password")).json() == []
+    from knowsphere.ml import MLUnavailable, ranker
+
+    async def unavailable(*args, **kwargs):
+        raise MLUnavailable("Neural relevance scoring failed.")
+
+    monkeypatch.setattr(ranker, "rerank", unavailable)
+    failed = await client.get(f"/api/spaces/{space}/search?q=password")
+    assert failed.status_code == 503 and failed.headers["retry-after"] == "3"
+    assert "Neural relevance" in failed.json()["detail"]  # Never return unscored results as neural.

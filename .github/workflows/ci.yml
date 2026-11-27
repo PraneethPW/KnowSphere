@@ -61,6 +61,29 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements-dev.lock
       - run: python -m pip install --require-hashes -r requirements-dev.lock
+      - uses: actions/cache@v4
+        with:
+          path: backend/models
+          key: knowsphere-minilm-${{ hashFiles('backend/knowsphere/ml_manifest.json') }}
+      - run: python -m knowsphere.prepare_ml
       - run: ruff check knowsphere tests
       - run: ruff format --check knowsphere tests
       - run: python -m pytest -q
+
+  windows-ml:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --require-hashes -r requirements-dev.lock
+      - uses: actions/cache@v4
+        with:
+          path: backend/models
+          key: knowsphere-minilm-${{ hashFiles('backend/knowsphere/ml_manifest.json') }}
+      - run: python -m knowsphere.prepare_ml
+      - run: python -m pytest -q tests/test_ml.py

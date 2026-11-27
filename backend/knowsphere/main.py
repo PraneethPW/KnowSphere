@@ -2,7 +2,6 @@ import asyncio
 import contextlib
 import hashlib
 import logging
-import re
 import secrets
 import time
 import uuid
@@ -23,6 +22,7 @@ from pydantic import BaseModel, EmailStr, Field
 from . import ai, db, discovery
 from .config import settings
 from .events import emit, sse
+from .ml import MLUnavailable, ranker
 from .parser_process import parse_isolated
 from .security import (
     COOKIE,
@@ -43,6 +43,7 @@ log = logging.getLogger("knowsphere.api")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.basicConfig(level=settings().log_level)
+    await asyncio.to_thread(ranker.load)
     await db.open_pool()
     version = await db.one("SELECT name FROM knowsphere.schema_migrations ORDER BY name DESC LIMIT 1")
     if not version:
@@ -113,6 +114,11 @@ async def validation_error(request, exc):
     return JSONResponse(
         {"detail": "; ".join(f"{e['field']}: {e['message']}" for e in errors)}, status_code=422
     )
+
+
+@app.exception_handler(MLUnavailable)
+async def ml_error(request, exc):
+    return JSONResponse({"detail": str(exc)}, status_code=503, headers={"Retry-After": "3"})
 
 
 User = Annotated[dict, Depends(current_user)]
@@ -584,8 +590,10 @@ async def chat(space_id: uuid.UUID, body: ChatBody, user: User):
             "chunk_id": str(c["id"]),
             "document_id": str(c["document_id"]),
             "title": c["title"],
-            "excerpt": c["content"][:700],
+            "excerpt": c["content"] if c.get("retrieval_model") else c["content"][:700],
             "ordinal": c["ordinal"],
+            "retrieval_model": c.get("retrieval_model"),
+            "relevance_score": c.get("relevance_score"),
         }
         for i, c in enumerate(chunks)
     ]
@@ -661,12 +669,11 @@ Every factual paragraph MUST end with inline source references such as [1].\n<re
                     if not output.strip():
                         raise ai.AIError("The AI did not return an answer. Please retry.")
                     used = discovery.used_citations(output, citations)
-                    invalid = set(re.findall(r"\[(\d+)\]", output)) - {str(c["index"]) for c in citations}
-                    if used and not invalid:
+                    if discovery.citation_coverage_valid(output, citations):
                         break
                     if attempt == 1:
                         raise ai.AIError(
-                            "The AI could not provide valid source references. The answer was not saved."
+                            "The AI could not provide valid source references for every paragraph. The answer was not saved."
                         )
                     # A real model revision, never server-invented citation markers.
                     references = ", ".join(f"[{c['index']}]" for c in citations)
@@ -676,8 +683,9 @@ Every factual paragraph MUST end with inline source references such as [1].\n<re
                         {
                             "role": "user",
                             "content": (
-                                "Revise the answer using only the supplied sources. Your previous response had missing "
-                                "or invalid inline source references. Allowed references: "
+                                "Revise the answer using only the supplied sources. Every non-heading paragraph "
+                                "must contain an appropriate valid inline source reference; remove unsupported claims. "
+                                "Your previous response had missing or invalid references. Allowed references: "
                                 + references
                                 + ". "
                                 "Write at most four short factual paragraphs, each ending with the appropriate inline "
@@ -805,6 +813,8 @@ async def system(user: User):
             "document_characters": settings().max_document_chars,
             "documents_per_space": settings().max_documents_per_space,
         },
-        "retrieval": "PostgreSQL full-text search + graph neighborhood expansion",
+        "retrieval": "PostgreSQL full-text search + graph neighborhood expansion"
+        + (" + local MiniLM neural reranking" if settings().ml_enabled else " (neural reranking disabled)"),
+        "ml": ranker.status(),
         "graph_algorithms": ["PageRank", "Louvain community detection", "connected components"],
     }

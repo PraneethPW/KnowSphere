@@ -20,6 +20,7 @@ async def client(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", url)
     monkeypatch.setenv("OPENROUTER_API_KEY", "")
     monkeypatch.setenv("APP_ENV", "development")
+    monkeypatch.setenv("ML_ENABLED", "true")
     monkeypatch.setenv("ALLOWED_ORIGINS", "http://localhost:5173")
     from knowsphere.config import settings
 

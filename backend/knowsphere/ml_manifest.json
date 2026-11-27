@@ -1,0 +1,19 @@
+{
+  "model": "Xenova/ms-marco-MiniLM-L-6-v2",
+  "revision": "a09144355adeed5f58c8ed011d209bf8ee5a1fec",
+  "license": "Apache-2.0",
+  "task": "query-passage relevance reranking",
+  "quantization": "int8",
+  "files": {
+    "model.onnx": {
+      "source": "onnx/model_quantized.onnx",
+      "sha256": "e9d8ebf845c413e981c175bfe49a3bfa9b3dcce2a3ba54875ee5df5a58639fbe",
+      "bytes": 23143499
+    },
+    "tokenizer.json": {
+      "source": "tokenizer.json",
+      "sha256": "d241a60d5e8f04cc1b2b3e9ef7a4921b27bf526d9f6050ab90f9267a1f9e5c66",
+      "bytes": 711396
+    }
+  }
+}

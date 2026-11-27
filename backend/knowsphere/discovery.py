@@ -4,6 +4,8 @@ import re
 import networkx as nx
 
 from . import db
+from .config import settings
+from .ml import ranker
 from .text import canonical
 
 
@@ -100,7 +102,7 @@ async def graph_data(space_id, limit=600):
     return data
 
 
-async def retrieve(space_id, query: str, limit=8):
+async def lexical_candidates(space_id, query: str, limit=8, *, broaden=False):
     # Indexed lexical seeds; joins always bind to the authorized space and ready documents.
     seeds = await db.fetch(
         """SELECT c.id,c.content,c.ordinal,d.id AS document_id,d.title,
@@ -110,11 +112,11 @@ async def retrieve(space_id, query: str, limit=8):
         ORDER BY score DESC,c.id LIMIT %s""",
         (query, space_id, query, limit),
     )
-    if not seeds:
+    if not seeds or broaden:
         # Natural questions rarely contain only words found together in a passage.
-        # Broaden indexed lexemes only when the precise query found nothing. Build
-        # the OR query from PostgreSQL's escaped/stemmed tsquery, never raw input.
-        seeds = await db.fetch(
+        # Neural mode also broadens successful queries to avoid a tiny candidate pool.
+        # Build the OR query from PostgreSQL's escaped/stemmed tsquery, never raw input.
+        broad = await db.fetch(
             """WITH q AS (SELECT to_tsquery('english',
               replace(plainto_tsquery('english',%s)::text,' & ',' | ')) AS terms)
             SELECT c.id,c.content,c.ordinal,d.id AS document_id,d.title,
@@ -124,6 +126,8 @@ async def retrieve(space_id, query: str, limit=8):
             ORDER BY score DESC,c.id LIMIT %s""",
             (query, space_id, limit),
         )
+        existing = {str(c["id"]) for c in seeds}
+        seeds += [c for c in broad if str(c["id"]) not in existing]
     normalized = canonical(query)
     entity_ids = await db.fetch(
         """SELECT id FROM knowsphere.entities WHERE space_id=%s
@@ -146,10 +150,36 @@ async def retrieve(space_id, query: str, limit=8):
             (space_id, ids, ids),
         )
         existing = {str(c["id"]) for c in seeds}
-        seeds += [c for c in related if str(c["id"]) not in existing]
+        additional = [c for c in related if str(c["id"]) not in existing]
+        if broaden:
+            return seeds[: max(0, limit - len(additional))] + additional
+        seeds += additional
+    if broaden:
+        return seeds[:limit]
     return seeds[:12]
+
+
+async def retrieve(space_id, query: str, limit=8):
+    if not settings().ml_enabled:
+        return await lexical_candidates(space_id, query)
+    candidates = await lexical_candidates(space_id, query, settings().ml_candidates, broaden=True)
+    return await ranker.rerank(query, candidates, limit) if candidates else []
 
 
 def used_citations(content: str, citations: list[dict]) -> list[dict]:
     refs = {int(n) for n in re.findall(r"\[(\d+)\]", content)}
     return [c for c in citations if c["index"] in refs]
+
+
+def citation_coverage_valid(content: str, citations: list[dict]) -> bool:
+    """Enforce source-reference coverage, not entailment or independent factual truth."""
+    allowed = {c["index"] for c in citations}
+    refs = {int(n) for n in re.findall(r"\[(\d+)\]", content)}
+    if not refs or not refs.issubset(allowed):
+        return False
+    paragraphs = []
+    for block in re.split(r"\n\s*\n", content.strip()):
+        text = "\n".join(line for line in block.splitlines() if not re.match(r"^\s*#{1,6}\s", line)).strip()
+        if text:
+            paragraphs.append(text)
+    return bool(paragraphs) and all(re.search(r"\[\d+\]", p) for p in paragraphs)

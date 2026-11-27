@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 from pydantic import Field, model_validator
@@ -29,6 +30,10 @@ class Settings(BaseSettings):
     max_spaces_per_user: int = Field(default=10, ge=1, le=100)
     worker_poll_seconds: float = Field(default=2, ge=0.1, le=60)
     log_level: str = "INFO"
+    ml_enabled: bool = True
+    ml_model_dir: Path = Path(__file__).resolve().parent.parent / "models" / "minilm-reranker"
+    ml_candidates: int = Field(default=32, ge=12, le=64)
+    ml_threads: int = Field(default=2, ge=1, le=4)
 
     @property
     def origins(self) -> list[str]:

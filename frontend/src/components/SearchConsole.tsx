@@ -109,6 +109,11 @@ export default function SearchConsole({ onClose }: { onClose: () => void }) {
                     {p.content.slice(0, 440)}
                     {p.content.length > 440 ? "…" : ""}
                   </p>
+                  {p.retrieval_model && (
+                    <small>
+                      NEURAL RELEVANCE RANKING · ORIGINAL SOURCE TEXT
+                    </small>
+                  )}
                 </button>
               ))}
               {!passages.data?.length && (
