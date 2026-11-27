@@ -5,7 +5,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, X } from "lucide-react";
 import { api, ApiError } from "./api";
 import type { User } from "./types";
-import Landing, { VisualBoundary } from "./Landing";
+import Landing from "./Landing";
+import VisualBoundary from "./components/VisualBoundary";
 import Auth from "./Auth";
 import { ErrorBox, Spinner, ToastContext } from "./components/UI";
 
@@ -85,18 +86,23 @@ export default function App() {
   }, [location.pathname, location.hash]);
   useEffect(() => {
     const titles: Record<string, string> = {
-      "/": "Knowledge Command",
-      "/auth": "Operator access",
-      "/app": "Command center",
-      "/app/graph": "Tactical graph",
-      "/app/library": "Source hangar",
-      "/app/chat": "Intelligence comms",
-      "/app/operations": "Live operations",
+      "/": "Document search & AI",
+      "/auth": "Sign in",
+      "/app": "Dashboard",
+      "/app/graph": "Knowledge graph",
+      "/app/library": "Sources",
+      "/app/chat": "AI chat",
+      "/app/operations": "Activity",
       "/app/insights": "Graph analysis",
-      "/app/settings": "System control",
+      "/app/settings": "Settings",
     };
-    document.title = `KnowSphere — ${titles[location.pathname] || "Page not found"}`;
-  }, [location.pathname]);
+    const title =
+      location.pathname === "/auth" &&
+      new URLSearchParams(location.search).get("mode") === "register"
+        ? "Create account"
+        : titles[location.pathname] || "Page not found";
+    document.title = `KnowSphere — ${title}`;
+  }, [location.pathname, location.search]);
   return (
     <ToastContext.Provider value={setToast}>
       <Routes>

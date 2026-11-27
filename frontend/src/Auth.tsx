@@ -2,16 +2,8 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  ArrowUpRight,
-  Eye,
-  EyeOff,
-  LockKeyhole,
-} from "lucide-react";
-import { motion } from "framer-motion";
+import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { api, post } from "./api";
-import { AppearanceToggle } from "./components/Atmosphere";
 import { workspaceDestination } from "./navigation";
 import type { User } from "./types";
 import { ErrorBox, Logo, Spinner } from "./components/UI";
@@ -51,44 +43,18 @@ export default function Auth() {
     }
   }
   return (
-    <main className="auth-page">
-      <div className="auth-appearance">
-        <AppearanceToggle />
-      </div>
-      <Link to="/" className="auth-back">
-        <ArrowLeft size={16} /> Back to KnowSphere
-      </Link>
-      <div className="auth-art" aria-hidden="true">
-        <span className="auth-art-tag">KNOWSPHERE / ORBITAL INTELLIGENCE</span>
-        <div className="auth-art-copy">
-          <div className="eyebrow">OPERATOR ACCESS / KNOWSPHERE</div>
-          <h2>
-            Take control of
-            <br />
-            your connected
-            <br />
-            <em>intelligence.</em>
-          </h2>
-        </div>
-      </div>
-      <motion.section
-        className="auth-card"
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+    <main className="access-page">
+      <Link to="/" className="access-home" aria-label="KnowSphere home">
         <Logo />
-        <div className="eyebrow">SECURE ACCESS / MISSION CONTROL</div>
-        <h1>
-          {registering
-            ? "Initialize your operator profile."
-            : "Welcome back, operator."}
-        </h1>
+      </Link>
+      <section className="access-card">
+        <h1>{registering ? "Create your account" : "Welcome back"}</h1>
         <p>
           {registering
-            ? "Create an account and bring your first source."
-            : "Your mission space is ready for you."}
+            ? "Your documents, search, and AI answers in one place."
+            : "Sign in to continue to your workspace."}
         </p>
-        <div className="auth-switch">
+        <div className="access-switch">
           <button
             className={!registering ? "active" : ""}
             disabled={busy}
@@ -129,14 +95,14 @@ export default function Auth() {
           className="form-stack"
           aria-busy={busy}
         >
-          <fieldset disabled={busy} className="auth-fields">
+          <fieldset disabled={busy} className="access-fields">
             {registering && (
               <label>
                 Your name
                 <input
                   name="name"
                   autoComplete="name"
-                  placeholder="How should we call you?"
+                  placeholder="Your name"
                   required
                   maxLength={80}
                 />
@@ -200,14 +166,11 @@ export default function Auth() {
                 label={registering ? "Creating your space" : "Signing in"}
               />
             ) : (
-              <>
-                {registering ? "Create your knowledge space" : "Enter cockpit"}
-                <ArrowUpRight size={18} />
-              </>
+              <>{registering ? "Create account" : "Sign in"}</>
             )}
           </button>
         </form>
-        <div className="auth-security">
+        <div className="access-security">
           <LockKeyhole size={14} />
           <span>
             Your sources stay private to your account.
@@ -215,7 +178,7 @@ export default function Auth() {
             AI processing sends relevant text to OpenRouter.
           </span>
         </div>
-      </motion.section>
+      </section>
     </main>
   );
 }

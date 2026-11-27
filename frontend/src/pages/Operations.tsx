@@ -18,7 +18,7 @@ import type { ActivityEvent, Operation } from "../types";
 import { useWorkspace } from "../Workspace";
 import { eventLabel, useLive } from "../live";
 import { ErrorBox, number, SectionHeading, Spinner } from "../components/UI";
-import { useClock } from "../components/Telemetry";
+import { useClock } from "../components/useClock";
 export function useOperations() {
   const { space } = useWorkspace();
   return useQuery({
@@ -77,9 +77,8 @@ export function EventFeed({ compact = false }: { compact?: boolean }) {
     <section className={`panel event-console ${compact ? "compact" : ""}`}>
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">DURABLE EVENT LOG</span>
           <h2>
-            <Terminal size={18} /> Mission activity
+            <Terminal size={18} /> Recent activity
           </h2>
         </div>
         {compact ? (
@@ -116,8 +115,8 @@ export function EventFeed({ compact = false }: { compact?: boolean }) {
             {paused
               ? "DISPLAY PAUSED · CAPTURE CONTINUES"
               : live.connected
-                ? "STREAM CONNECTED"
-                : "RECONNECTING"}
+                ? "Live"
+                : "Reconnecting"}
           </span>
         </div>
       )}
@@ -197,10 +196,9 @@ export function Pipeline({ compact = false }: { compact?: boolean }) {
     <section className="panel pipeline-panel">
       <div className="panel-heading">
         <div>
-          <span className="eyebrow">INGESTION TELEMETRY</span>
           <h2>
             <Activity size={18} />{" "}
-            {compact ? "Active pipeline" : "Processing pipeline"}
+            {compact ? "Document processing" : "Processing pipeline"}
           </h2>
         </div>
         <span className="tiny-tag">CHECKPOINTED</span>
@@ -316,12 +314,11 @@ export default function Operations() {
   return (
     <>
       <SectionHeading
-        eyebrow="OPS / LIVE CONTROL"
-        title="Mission operations"
+        title="Activity"
         description="Watch real worker checkpoints, graph publications, and saved answers as they happen."
         action={
           <Link className="button button-primary" to="/app/library?add=1">
-            <UploadCloud size={16} /> Launch ingestion
+            <UploadCloud size={16} /> Add source
           </Link>
         }
       />
@@ -329,7 +326,7 @@ export default function Operations() {
         <div>
           <Radio size={20} />
           <span className={live.connected ? "signal-good" : "signal-warn"}>
-            {live.connected ? "LIVE EVENT UPLINK" : "RECONNECTING TO UPLINK"}
+            {live.connected ? "Live updates connected" : "Reconnecting"}
           </span>
           <small>
             {number(active)} queued / processing · {live.received} events

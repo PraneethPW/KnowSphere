@@ -4,10 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUp,
-  Activity,
-  Radio,
   BookOpen,
-  Check,
   ChevronRight,
   Copy,
   History,
@@ -31,7 +28,7 @@ import {
   useToast,
 } from "../components/UI";
 import { useWorkspace } from "../Workspace";
-import { useClock } from "../components/Telemetry";
+import { useClock } from "../components/useClock";
 import { useGraph, useOverview } from "./Dashboard";
 
 export default function ChatPage() {
@@ -51,9 +48,7 @@ export default function ChatPage() {
   const [trace, setTrace] = useState<ResearchTrace>({
     stage: "idle",
     started: 0,
-    tokens: 0,
-    passages: 0,
-    documents: 0,
+
     elapsed: 0,
     sources: [],
   });
@@ -96,8 +91,11 @@ export default function ChatPage() {
     [],
   );
   useEffect(() => {
-    if (nearBottom.current && scrolling.current)
-      scrolling.current.scrollTo({ top: scrolling.current.scrollHeight });
+    const viewport = scrolling.current;
+    if (!viewport) return;
+    if (!messages.length) viewport.scrollTo({ top: 0, behavior: "instant" });
+    else if (nearBottom.current)
+      viewport.scrollTo({ top: viewport.scrollHeight });
   }, [messages]);
   async function send(event: FormEvent) {
     event.preventDefault();
@@ -107,9 +105,7 @@ export default function ChatPage() {
     setTrace({
       stage: "retrieving",
       started: Date.now(),
-      tokens: 0,
-      passages: 0,
-      documents: 0,
+
       elapsed: 0,
       sources: [],
     });
@@ -142,14 +138,6 @@ export default function ChatPage() {
             setTrace((previous) => ({
               ...previous,
               stage: String(data.stage),
-              passages:
-                data.passages !== undefined
-                  ? Number(data.passages)
-                  : previous.passages,
-              documents:
-                data.documents !== undefined
-                  ? Number(data.documents)
-                  : previous.documents,
             }));
           if (eventName === "context") {
             setTrace((previous) => ({
@@ -176,11 +164,11 @@ export default function ChatPage() {
             setTrace((previous) => ({ ...previous, stage: "repairing" }));
           }
           if (eventName === "token") {
-            setTrace((previous) => ({
-              ...previous,
-              stage: "generating",
-              tokens: previous.tokens + 1,
-            }));
+            setTrace((previous) =>
+              previous.stage === "generating"
+                ? previous
+                : { ...previous, stage: "generating" },
+            );
             setMessages((previous) =>
               previous.map((m) =>
                 m.id === assistantId
@@ -254,9 +242,7 @@ export default function ChatPage() {
     setTrace({
       stage: "idle",
       started: 0,
-      tokens: 0,
-      passages: 0,
-      documents: 0,
+
       elapsed: 0,
       sources: [],
     });
@@ -270,9 +256,7 @@ export default function ChatPage() {
     setTrace({
       stage: "idle",
       started: 0,
-      tokens: 0,
-      passages: 0,
-      documents: 0,
+
       elapsed: 0,
       sources: [],
     });
@@ -308,9 +292,8 @@ export default function ChatPage() {
   return (
     <>
       <SectionHeading
-        eyebrow="COMMS / SOURCE INTELLIGENCE"
-        title="Intelligence comms"
-        description="Query your sources. Follow the live research trace. Verify the evidence."
+        title="AI chat"
+        description="Ask questions and review the supporting sources."
         action={
           <div className="heading-actions">
             <button
@@ -378,14 +361,6 @@ export default function ChatPage() {
           </aside>
         )}
         <div className="chat-area">
-          <div className="chat-topline">
-            <span>
-              <Sparkles size={15} /> KNOWSPHERE / RESEARCH CHANNEL
-            </span>
-            <span>
-              <Check size={12} /> SOURCE-GROUNDED
-            </span>
-          </div>
           <div
             className="chat-scroll"
             ref={scrolling}
@@ -408,8 +383,8 @@ export default function ChatPage() {
                 <div className="chat-welcome-icon">
                   <Sparkles size={28} />
                 </div>
-                <span className="eyebrow">CHANNEL OPEN / AWAITING QUERY</span>
-                <h2>Request intelligence.</h2>
+                <span className="eyebrow"></span>
+                <h2>Ask your sources.</h2>
                 <p>
                   Ask about the ideas, people, and connections in your indexed
                   sources. I’ll bring the relevant passages together.
@@ -525,6 +500,13 @@ export default function ChatPage() {
               </div>
             )}
           </div>
+          {(busy || trace.started > 0) && (
+            <AnswerProgress
+              trace={trace}
+              busy={busy}
+              onSources={() => setCitations(trace.sources)}
+            />
+          )}
           <div className="chat-composer-area">
             {!!error && <ErrorBox error={error} />}
             <form className="chat-composer" onSubmit={send}>
@@ -574,11 +556,6 @@ export default function ChatPage() {
             </p>
           </div>
         </div>
-        <ResearchMonitor
-          trace={trace}
-          busy={busy}
-          onSources={() => setCitations(trace.sources)}
-        />
       </section>
       {citations && (
         <Modal
@@ -663,13 +640,10 @@ function GitBranchIcon() {
 type ResearchTrace = {
   stage: string;
   started: number;
-  tokens: number;
-  passages: number;
-  documents: number;
   elapsed: number;
   sources: Citation[];
 };
-function ResearchMonitor({
+function AnswerProgress({
   trace,
   busy,
   onSources,
@@ -679,89 +653,32 @@ function ResearchMonitor({
   onSources: () => void;
 }) {
   const now = useClock();
-  const stages = [
-    "retrieving",
-    "retrieved",
-    "generating",
-    "validating",
-    "saved",
-  ];
-  const current = trace.stage === "repairing" ? 3 : stages.indexOf(trace.stage);
+  const label: Record<string, string> = {
+    retrieving: "Finding relevant sources…",
+    retrieved: "Sources found. Preparing the answer…",
+    generating: "Writing your answer…",
+    validating: "Checking citations…",
+    repairing: "Revising source references…",
+    saved: "Answer saved",
+    failed: "Answer interrupted",
+  };
   return (
-    <aside className="research-monitor">
-      <div className="eyebrow">
-        <Radio size={13} /> RESEARCH TRACE
-      </div>
-      <h3>
-        {trace.stage === "idle"
-          ? "Awaiting query"
-          : trace.stage === "failed"
-            ? "Run interrupted"
-            : trace.stage === "saved"
-              ? "Answer committed"
-              : trace.stage === "repairing"
-                ? "Revising source references"
-                : "Research in progress"}
-      </h3>
-      <div className="research-stages">
-        {[
-          ["retrieving", "Retrieve indexed context"],
-          ["retrieved", "Attach source passages"],
-          ["generating", "Stream model response"],
-          ["validating", "Validate citation references"],
-          ["saved", "Persist cited answer"],
-        ].map(([stage, label], i) => (
-          <div
-            key={stage}
-            className={`${current > i || trace.stage === "saved" ? "done" : ""} ${trace.stage === stage ? "current" : ""}`}
-          >
-            <span>
-              {current > i || trace.stage === "saved" ? (
-                <Check size={11} />
-              ) : (
-                String(i + 1).padStart(2, "0")
-              )}
-            </span>
-            {label}
-            {trace.stage === stage && busy && <Activity size={12} />}
-          </div>
-        ))}
-      </div>
-      <dl className="trace-metrics">
-        <div>
-          <dt>ELAPSED</dt>
-          <dd>
-            {trace.started
-              ? `${(Math.max(0, busy ? now - trace.started : trace.elapsed) / 1000).toFixed(1)}s`
-              : "—"}
-          </dd>
-        </div>
-        <div>
-          <dt>PASSAGES</dt>
-          <dd>{trace.passages}</dd>
-        </div>
-        <div>
-          <dt>SOURCE DOCS</dt>
-          <dd>{trace.documents}</dd>
-        </div>
-        <div>
-          <dt>STREAM EVENTS</dt>
-          <dd>{trace.tokens}</dd>
-        </div>
-      </dl>
+    <div className="answer-progress">
+      <span role="status">
+        {label[trace.stage] || "Preparing your answer…"}
+      </span>
       {trace.sources.length > 0 && (
-        <button className="trace-sources" onClick={onSources}>
-          <BookOpen size={15} />
-          {trace.stage === "saved"
-            ? "Inspect answer citations"
-            : "Inspect retrieved passages"}
-          <ChevronRight size={14} />
+        <button onClick={onSources}>
+          <BookOpen size={14} /> View {trace.sources.length} source
+          {trace.sources.length === 1 ? "" : "s"}
         </button>
       )}
-      <p className="small-print">
-        Trace reflects the current run. Timing and stream events are measured
-        from this request. Model rate limits can delay the first token.
-      </p>
-    </aside>
+      <small>
+        {(
+          Math.max(0, busy ? now - trace.started : trace.elapsed) / 1000
+        ).toFixed(1)}
+        s
+      </small>
+    </div>
   );
 }

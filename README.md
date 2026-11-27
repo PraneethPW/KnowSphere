@@ -1,6 +1,6 @@
 # KnowSphere AI
 
-An intelligent knowledge graph generation and discovery platform, built with real PostgreSQL persistence, OpenRouter inference, a durable ingestion worker, a 3D graph explorer, and source-grounded research conversations. New accounts and spaces start empty. There are no seed records, mock services, fabricated counters, or fabricated fallback answers.
+A document workspace for ML-ranked source search, cited AI answers, and knowledge graph exploration. PostgreSQL stores your records, a durable worker processes uploads, and live events keep the interface current. New accounts and spaces start empty. There are no seed records, mock services, fabricated counters, or fabricated fallback answers.
 
 **Live application:** <https://knowsphere-ai-praneethpw.vercel.app>. The API and worker run on Railway with Neon and OpenRouter. See [DEPLOYMENT.md](DEPLOYMENT.md) for live resources, automatic Git deployments and hosted verification.
 
@@ -42,17 +42,19 @@ The two application source folders are `frontend` and `backend` (the spelling is
 - Replayable server-sent events for live ingestion/graph updates, reconnects, expired-session handling, and periodic snapshot recovery.
 - Full graph JSON export, live worker health, configuration status, responsive layouts, loading/error/empty states, and reduced-motion support.
 
-## Cockpit release: live investigation tools
+## Using the application
 
-The interface uses a navy/cyan/orange cockpit theme from landing and operator access to research and system control. Fonts are self-hosted; the procedural Three.js reactor is decorative artwork. The command-center radar is built from the authenticated space's actual graph.
+**Landing page → sign in or create an account → dashboard.**
 
-- **Live operations** (`/app/operations`): durable job checkpoints, processed/total passages, evidenced mentions and relationship counts, failures and retry countdowns. The mission log supports event filters, display pause/resume, cursor-paginated history and source/conversation navigation. History retains seven days.
-- **Visible uplink**: server heartbeat receipt, worker health, connection recovery and received-event count. Changes propagate across tabs without refreshing. Events poll PostgreSQL every two seconds; free AI requests can take longer or be rate limited.
-- **Tactical graph**: type, community and confidence filters; isolate the selected entity's immediate neighbors; compute a shortest undirected connection chain in the filtered visible graph and inspect its relationship quotes. New entities glow for 12 seconds after publication. A path indicates extracted connections, not causation.
-- **Search console**: click the header search or press Cmd/Ctrl+K. Search actual entities and indexed passages, then jump to their original source.
-- **Intelligence comms**: entity-to-question navigation, real retrieval/generation/validation/save stages, elapsed time, source-document/passages counts and provider stream-event counts. Retrieved passages are inspectable during generation. Timings describe the current run and are not stored as historical metrics.
+- **Dashboard** (`/app`): add a source, enter an AI question, search source passages with ML, and see current source counts and AI/ML service status. Recent sources and processing counts update from actual live events.
+- **Sources** (`/app/library`): upload or paste documents; inspect original text; follow processing progress; retry, cancel, or remove a source.
+- **AI chat** (`/app/chat`): streamed answers with source citations, saved conversation history, and a compact progress indicator. Questions entered on the dashboard continue here.
+- **Knowledge graph** (`/app/graph`): a keyboard-accessible entity list by default, with optional 3D exploration. Inspect supporting quotes, filter relationships, isolate neighborhoods, or trace paths. **Analysis** opens centrality scores and communities.
+- **Activity** (`/app/operations`): live worker checkpoints, event history, failures, and retries. Detailed operational information stays here rather than appearing on every screen.
+- **Search sources**: use the header button, the dashboard search action, or Cmd/Ctrl+K. MiniLM ranks candidate passages and every result opens its original source. Results refresh when the graph publishes or sources are removed.
+- **Settings**: model readiness, AI configuration, worker health, account details, workspace rename, and graph export.
 
-Upload a document through **Launch ingestion**, open **Live operations** in a second tab, then inspect the published entities in **Tactical graph** and ask a source-grounded question in **Intelligence comms**. The graph publishes a source only after its full ingestion completes; partial checkpoints remain telemetry until then.
+The interface uses a restrained dark palette and shared controls across landing, authentication, and workspace pages. Decorative backgrounds, the landing reactor, radar, appearance switches, global telemetry, and repeated idle panels have been removed. Three.js loads only when the user chooses the 3D graph; it renders on demand without ambient rotation. Live updates require no manual page refresh, but AI processing remains subject to provider availability and quotas.
 
 ## Stack and architecture
 
@@ -81,19 +83,13 @@ flowchart LR
     A -->|SSE: progress and tokens| U
 ```
 
-No paper was supplied. This is an independently implemented graph-assisted retrieval architecture, not a claimed reproduction of a specific research paper. The local ML addition is a pretrained relevance reranker, not a model trained on your documents. No vector index, exhaustive semantic candidate search, or OCR is asserted. Graph algorithms supply useful discovery without an extra model service. The decorative landing-page reactor is procedural artwork, not a preview of stored knowledge.
+The local ML model ranks candidate source passages before search results and answer context are returned. OpenRouter performs extraction and answer generation. This does not add vector search, OCR, or training on private documents.
 
 ## Install and run locally
 
 Follow [INSTALL.md](INSTALL.md) for fresh-clone installation, Docker or native PostgreSQL, every environment variable, API/worker/frontend commands, and deployment checks.
 
 Templates are tracked at [`.env.example`](.env.example), [`backend/.env.example`](backend/.env.example), and [`frontend/.env.example`](frontend/.env.example). No private environment files are included. Copy each template into its own directory as `.env`; never commit actual credentials.
-
-## Orbital cockpit update
-
-Self-hosted cinematic 3D background artwork now continues across landing, operator access, command center and every workspace module. Shared glowing panels, legible controls, keyboard focus, mobile layouts and a persistent Immersive/Focus toggle keep the application consistent. The interactive 3D graph still uses actual source-backed records.
-
-Sign-in resumes protected deep links. Expired chat sessions redirect consistently. Source ingestion reflects configured limits, upload dialogs reopen correctly, preview builds proxy the API, and Settings supports renaming the current mission space.
 
 ## Verification
 

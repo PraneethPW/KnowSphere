@@ -44,7 +44,7 @@ await Promise.all([
     "/app/insights",
     "/app/settings",
   ].map((path) => check(path, 200, "html")),
-  check("/images/orbital-cockpit.jpg", 200, "image"),
+  check("/favicon.svg", 200, "image"),
   check("/api/health/live", 200, "live"),
   check("/api/health/ready", 200, "ready"),
   check("/api/auth/me", 401, "auth"),

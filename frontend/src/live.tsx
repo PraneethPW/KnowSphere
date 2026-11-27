@@ -52,7 +52,7 @@ export function LiveProvider({
         ])
           void client.invalidateQueries({ queryKey: [key, spaceId] });
         if (graphDirty)
-          for (const key of ["graph", "entity"])
+          for (const key of ["graph", "entity", "search"])
             void client.invalidateQueries({ queryKey: [key, spaceId] });
         graphDirty = false;
         timer = undefined;

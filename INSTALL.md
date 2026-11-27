@@ -65,7 +65,7 @@ npm ci
 npm run dev
 ```
 
-Open <http://127.0.0.1:5173>. Use one hostname consistently so your session cookie stays on the same origin. Create an account, add a source, follow Live operations until Ready, inspect the Tactical graph and original quotes, then ask a question in Intelligence comms.
+Open <http://127.0.0.1:5173>. Use one hostname consistently so your session cookie stays on the same origin. Create an account, add a source, follow Activity until Ready, inspect the Knowledge graph and original quotes, then ask a question in AI chat.
 
 `npm run build && npm run preview -- --port 4173` also proxies `/api` to the local API. If using preview, add `http://127.0.0.1:4173` to backend `ALLOWED_ORIGINS` and restart the API. The frontend never connects directly to Neon or OpenRouter.
 
@@ -110,7 +110,7 @@ npm audit --audit-level=moderate
 npm run smoke -- http://127.0.0.1:5173
 ```
 
-The smoke command is read-only and verifies SPA deep links, artwork, live/ready API health and unauthenticated access isolation. It exits unsuccessfully for API HTML fallbacks, database outages, missing images or broken rewrites.
+The smoke command is read-only and verifies SPA deep links, branding, live/ready API health and unauthenticated access isolation. It exits unsuccessfully for API HTML fallbacks, database outages, missing images or broken rewrites.
 
 Backend integration tests **reset their test schema**. Use only a disposable local database with a name ending in `_test`:
 
@@ -161,13 +161,12 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for project details. A successful Vercel buil
 | Login/API reports database unavailable | `/api/health/ready` and Railway logs; a Neon quota error requires restoring quota or a usable database |
 | Registration/login returns 403 | Add the exact browser origin to `ALLOWED_ORIGINS`; restart the API |
 | Login repeatedly disappears locally | Keep `COOKIE_SECURE=false` for HTTP and use the same browser hostname |
-| Upload stays queued | Start the worker against the same database; inspect Settings & status |
+| Upload stays queued | Start the worker against the same database; inspect Settings |
 | AI returns 503 | Configure `OPENROUTER_API_KEY` on the API and worker |
 | API startup reports missing/corrupt neural model | Activate the backend virtual environment and run `python -m knowsphere.prepare_ml`; check `ML_MODEL_DIR` if customized |
 | Neural ranking returns busy/503 | Retry shortly; check API CPU/memory and concurrency before increasing candidate or thread counts |
 | AI fails/retries | Inspect the recorded error, free-model access and provider quota |
 | `/api` returns HTML | Repair the Vercel rewrite or local proxy; run the smoke command |
 | PDF contains no extractable text | Run OCR separately, then upload the text |
-| Background/3D is too distracting | Use the Immersive/Focus toggle; OS reduced-motion preferences are respected |
 
 Stop app processes with Ctrl+C. `docker compose stop` preserves local data. Do not remove the database volume unless you intentionally want to erase it.

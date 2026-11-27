@@ -25,7 +25,7 @@ export default function RenameSpace() {
         body: JSON.stringify({ name }),
       });
       await client.invalidateQueries({ queryKey: ["spaces"] });
-      toast("Mission space renamed.");
+      toast("Workspace renamed.");
     } catch (e) {
       setError(e);
     } finally {
@@ -39,7 +39,7 @@ export default function RenameSpace() {
       aria-busy={busy}
     >
       <label>
-        Mission space name
+        Workspace name
         <input
           key={space.id + space.name}
           name="name"

@@ -30,7 +30,7 @@ import {
   Spinner,
   useToast,
 } from "../components/UI";
-import { VisualBoundary } from "../Landing";
+import VisualBoundary from "../components/VisualBoundary";
 import { useWorkspace } from "../Workspace";
 import { shortestPath } from "../graph-tools";
 import { useGraph, useOverview } from "./Dashboard";
@@ -140,7 +140,7 @@ export default function GraphPage() {
   const [confidence, setConfidence] = useState(0),
     [filters, setFilters] = useState(false),
     [labels, setLabels] = useState(true),
-    [view, setView] = useState<"3d" | "list">("3d"),
+    [view, setView] = useState<"3d" | "list">("list"),
     [reset, setReset] = useState(0),
     [fullscreen, setFullscreen] = useState(false);
   const [community, setCommunity] = useState("all"),
@@ -259,8 +259,7 @@ export default function GraphPage() {
   return (
     <>
       <SectionHeading
-        eyebrow="TACTICAL / CONNECTION INTELLIGENCE"
-        title="Tactical graph"
+        title="Knowledge graph"
         description="Investigate neighborhoods, trace connection paths, and inspect the source behind every relationship."
         action={
           <button
@@ -293,6 +292,9 @@ export default function GraphPage() {
             )}
           </div>
           <div className="graph-tool-actions">
+            <Link to="/app/insights" className="tool-button">
+              Analysis
+            </Link>
             <button
               className={`tool-button ${tracing ? "active" : ""}`}
               onClick={() => setTracing(!tracing)}

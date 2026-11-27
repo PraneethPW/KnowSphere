@@ -13,9 +13,7 @@ import {
   Activity,
   Radio,
   Crosshair,
-  ArrowUpRight,
   ChevronDown,
-  CircleHelp,
   FileText,
   GitBranch,
   LayoutDashboard,
@@ -44,24 +42,22 @@ import GraphPage from "./pages/Graph";
 import ChatPage from "./pages/Chat";
 import Operations from "./pages/Operations";
 import { LiveProvider } from "./live";
-import { Connection, Telemetry } from "./components/Telemetry";
 import SearchConsole from "./components/SearchConsole";
-import { AppearanceToggle } from "./components/Atmosphere";
 
 type WorkspaceContextType = {
   space: Space;
   user: User;
   openDocument: (id: string) => void;
+  openSearch: (query?: string) => void;
 };
 const WorkspaceContext = createContext<WorkspaceContextType | null>(null);
 export const useWorkspace = () => useContext(WorkspaceContext)!;
 const navItems = [
-  { to: "/app/operations", label: "Live operations", icon: Radio },
-  { to: "/app", label: "Command center", icon: LayoutDashboard, end: true },
-  { to: "/app/graph", label: "Tactical graph", icon: GitBranch },
-  { to: "/app/library", label: "Source hangar", icon: FileText },
-  { to: "/app/chat", label: "Intelligence comms", icon: MessageSquare },
-  { to: "/app/insights", label: "Graph analysis", icon: Activity },
+  { to: "/app", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/app/library", label: "Sources", icon: FileText },
+  { to: "/app/chat", label: "AI chat", icon: MessageSquare },
+  { to: "/app/graph", label: "Knowledge graph", icon: GitBranch },
+  { to: "/app/operations", label: "Activity", icon: Radio },
 ];
 
 export default function Workspace({ user }: { user: User }) {
@@ -78,6 +74,7 @@ export default function Workspace({ user }: { user: User }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<unknown>(null);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchInitial, setSearchInitial] = useState("");
   const [smallScreen, setSmallScreen] = useState(
     () => window.matchMedia("(max-width: 700px)").matches,
   );
@@ -123,6 +120,7 @@ export default function Workspace({ user }: { user: User }) {
     const shortcut = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
+        setSearchInitial("");
         setSearchOpen((value) => !value);
       }
     };
@@ -158,8 +156,10 @@ export default function Workspace({ user }: { user: User }) {
   const page =
     navItems.find((n) => n.to === location.pathname)?.label ||
     (location.pathname === "/app/settings"
-      ? "System control"
-      : "Module not found");
+      ? "Settings"
+      : location.pathname === "/app/insights"
+        ? "Graph analysis"
+        : "Page not found");
   if (spaces.isPending)
     return (
       <div className="full-loader">
@@ -181,6 +181,10 @@ export default function Workspace({ user }: { user: User }) {
         space,
         user,
         openDocument: (id) => navigate(`/app/library?document=${id}`),
+        openSearch: (query = "") => {
+          setSearchInitial(query.slice(0, 500));
+          setSearchOpen(true);
+        },
       }}
     >
       <LiveProvider key={space.id} spaceId={space.id}>
@@ -222,7 +226,7 @@ export default function Workspace({ user }: { user: User }) {
                   {space.name.slice(0, 1).toUpperCase()}
                 </span>
                 <span>
-                  <small>MISSION SPACE</small>
+                  <small>WORKSPACE</small>
                   <strong>{space.name}</strong>
                 </span>
                 <ChevronDown size={15} />
@@ -252,46 +256,27 @@ export default function Workspace({ user }: { user: User }) {
                 </div>
               )}
             </div>
-            <span className="sidebar-label">NAVIGATION / MODULES</span>
             <nav className="sidebar-nav" aria-label="Workspace navigation">
-              {[navItems[1], navItems[0], ...navItems.slice(2)].map(
-                (item, index) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    className={({ isActive }) => (isActive ? "active" : "")}
-                  >
-                    <span className="nav-index">0{index + 1}</span>
-                    <item.icon size={18} />
-                    <span>{item.label}</span>
-                    {item.to === "/app/chat" && (
-                      <span className="nav-ai">AI</span>
-                    )}
-                  </NavLink>
-                ),
-              )}
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  className={({ isActive }) => (isActive ? "active" : "")}
+                >
+                  <item.icon size={18} />
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
             </nav>
             <div className="sidebar-bottom">
-              <div className="sidebar-tip">
-                <div className="eyebrow">
-                  <Crosshair size={13} /> MISSION READY
-                </div>
-                <p>
-                  Feed the pipeline. Inspect every connection. Keep your
-                  evidence in sight.
-                </p>
-                <NavLink to="/app/library">
-                  Launch ingestion <ArrowUpRight size={14} />
-                </NavLink>
-              </div>
               <NavLink
                 to="/app/settings"
                 className={({ isActive }) =>
                   `settings-link ${isActive ? "active" : ""}`
                 }
               >
-                <Settings2 size={17} /> Settings & status
+                <Settings2 size={17} /> Settings
               </NavLink>
               <div className="user-card">
                 <span className="user-avatar">
@@ -321,31 +306,22 @@ export default function Workspace({ user }: { user: User }) {
                 >
                   <Menu size={20} />
                 </button>
-                <span className="cockpit-id">KS / COCKPIT</span>
-                <span>/</span>
                 <strong>{page}</strong>
               </div>
               <div className="header-right">
-                <AppearanceToggle />
                 <button
                   className="search-shortcut"
-                  aria-label="Search console"
-                  onClick={() => setSearchOpen(true)}
+                  aria-label="Search sources"
+                  onClick={() => {
+                    setSearchInitial("");
+                    setSearchOpen(true);
+                  }}
                 >
-                  <Search size={14} /> <span>Search console</span>
+                  <Search size={14} /> <span>Search sources</span>
                   <kbd>⌘ K</kbd>
                 </button>
-                <Connection />
-                <NavLink
-                  to="/app/settings"
-                  className="icon-button"
-                  aria-label="System status"
-                >
-                  <CircleHelp size={18} />
-                </NavLink>
               </div>
             </header>
-            <Telemetry />
             <main id="workspace-main" className="workspace-main">
               {system.data &&
                 (!system.data.ai_configured ||
@@ -357,9 +333,7 @@ export default function Workspace({ user }: { user: User }) {
                         ? "AI is not configured. Add your OpenRouter key to enable ingestion and answers."
                         : "The ingestion worker is offline. Queued jobs will resume when it reconnects."}
                     </span>
-                    <NavLink to="/app/settings">
-                      View status <ArrowUpRight size={14} />
-                    </NavLink>
+                    <NavLink to="/app/settings">Settings</NavLink>
                   </div>
                 )}
               <motion.div
@@ -381,11 +355,11 @@ export default function Workspace({ user }: { user: User }) {
                       <div className="panel">
                         <Empty
                           icon={<Crosshair size={36} />}
-                          title="Module not found"
-                          description="This workspace address is unavailable. Choose a module in navigation or return to command center."
+                          title="Page not found"
+                          description="Choose a page in navigation or return to your dashboard."
                           action={
                             <Link className="button button-primary" to="/app">
-                              Command center
+                              Dashboard
                             </Link>
                           }
                         />
@@ -395,10 +369,6 @@ export default function Workspace({ user }: { user: User }) {
                 </Routes>
               </motion.div>
             </main>
-            <footer className="workspace-footer">
-              <span>KNOWSPHERE AI</span>
-              <span>SOURCE VERIFIED / OPERATOR CONTROLLED</span>
-            </footer>
           </div>
           {creating && (
             <Modal
@@ -430,7 +400,13 @@ export default function Workspace({ user }: { user: User }) {
             </Modal>
           )}
         </div>
-        {searchOpen && <SearchConsole onClose={() => setSearchOpen(false)} />}
+        {searchOpen && (
+          <SearchConsole
+            key={space.id}
+            initialQuery={searchInitial}
+            onClose={() => setSearchOpen(false)}
+          />
+        )}
       </LiveProvider>
     </WorkspaceContext.Provider>
   );

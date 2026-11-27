@@ -29,7 +29,6 @@ import {
   Spinner,
   useToast,
 } from "../components/UI";
-import { Pipeline } from "./Operations";
 import { useWorkspace } from "../Workspace";
 
 export function SourceModal({
@@ -138,7 +137,7 @@ function AddSource({ onClose }: { onClose: () => void }) {
   }
   return (
     <Modal
-      title="Launch source ingestion"
+      title="Add a source"
       onClose={() => {
         if (!busy) onClose();
       }}
@@ -259,7 +258,7 @@ function AddSource({ onClose }: { onClose: () => void }) {
             <Spinner label="Adding your source" />
           ) : (
             <>
-              Add source & build connections <ArrowUpRight size={17} />
+              Add source <ArrowUpRight size={17} />
             </>
           )}
         </button>
@@ -316,9 +315,8 @@ export default function Library() {
   return (
     <>
       <SectionHeading
-        eyebrow="HANGAR / SOURCE CONTROL"
-        title="Source hangar"
-        description="Upload, inspect, and manage the documents powering your intelligence graph."
+        title="Sources"
+        description="Upload, inspect, and manage the documents in your workspace."
         action={
           <button
             className="button button-primary"
@@ -338,7 +336,6 @@ export default function Library() {
           <Activity size={14} /> Ingestion updates live
         </span>
       </div>
-      <Pipeline compact />
       <section className="panel library-panel">
         <div className="library-toolbar">
           <div className="tabs">

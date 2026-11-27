@@ -6,11 +6,17 @@ import { api } from "../api";
 import type { GraphData, SearchPassage } from "../types";
 import { useWorkspace } from "../Workspace";
 import { Empty, ErrorBox, Modal, Spinner } from "./UI";
-export default function SearchConsole({ onClose }: { onClose: () => void }) {
+export default function SearchConsole({
+  onClose,
+  initialQuery = "",
+}: {
+  onClose: () => void;
+  initialQuery?: string;
+}) {
   const { space } = useWorkspace(),
     navigate = useNavigate();
-  const [input, setInput] = useState(""),
-    [query, setQuery] = useState("");
+  const [input, setInput] = useState(initialQuery),
+    [query, setQuery] = useState(initialQuery);
   useEffect(() => {
     const timer = setTimeout(() => setQuery(input.trim()), 350);
     return () => clearTimeout(timer);
@@ -38,7 +44,7 @@ export default function SearchConsole({ onClose }: { onClose: () => void }) {
     navigate(path);
   }
   return (
-    <Modal title="Search console" onClose={onClose} wide>
+    <Modal title="Search sources" onClose={onClose} wide>
       <div className="console-input">
         <Search size={20} />
         <input
@@ -59,7 +65,7 @@ export default function SearchConsole({ onClose }: { onClose: () => void }) {
       {query.length < 2 ? (
         <Empty
           icon={<Search size={28} />}
-          title="Locate your next lead"
+          title="Find a source passage"
           description="Enter at least two characters to search your actual indexed knowledge."
         />
       ) : (
@@ -110,9 +116,7 @@ export default function SearchConsole({ onClose }: { onClose: () => void }) {
                     {p.content.length > 440 ? "…" : ""}
                   </p>
                   {p.retrieval_model && (
-                    <small>
-                      NEURAL RELEVANCE RANKING · ORIGINAL SOURCE TEXT
-                    </small>
+                    <small>ML ranked · Original source text</small>
                   )}
                 </button>
               ))}

@@ -41,7 +41,7 @@ export function useGraph() {
     queryFn: () => api<GraphData>(`/spaces/${space.id}/graph`),
   });
 }
-export { default as Overview } from "./CommandCenter";
+export { default as Overview } from "./DashboardHome";
 
 export function Insights() {
   const graph = useGraph(),
@@ -68,7 +68,6 @@ export function Insights() {
   return (
     <>
       <SectionHeading
-        eyebrow="ANALYSIS / PATTERN INTELLIGENCE"
         title="Graph analysis"
         description="Data-driven graph analysis reveals what’s central, what’s connected, and what stands apart."
       />
@@ -262,8 +261,7 @@ export function SettingsPage() {
   return (
     <>
       <SectionHeading
-        eyebrow="SYSTEM / SERVICE DIAGNOSTICS"
-        title="System control"
+        title="Settings"
         description="Connection health, account details, and the tools behind your research."
       />
       {system.error && (
