@@ -6,8 +6,10 @@ if (
   origin.password
 )
   throw new Error("Pass an HTTP(S) application origin without credentials.");
-let failures = 0;
+let failures = 0,
+  checks = 0;
 async function check(path, expected, kind) {
+  checks++;
   try {
     const response = await fetch(new URL(path, origin), {
       signal: AbortSignal.timeout(25000),
@@ -20,11 +22,14 @@ async function check(path, expected, kind) {
         ? body.includes('id="root"')
         : kind === "image"
           ? response.headers.get("content-type")?.startsWith("image/")
-          : kind === "ready"
-            ? JSON.parse(body).status === "ready"
-            : kind === "live"
-              ? JSON.parse(body).service === "knowsphere-api"
-              : typeof JSON.parse(body).detail === "string");
+          : kind === "css"
+            ? response.headers.get("content-type")?.includes("text/css") &&
+              body.includes("@font-face")
+            : kind === "ready"
+              ? JSON.parse(body).status === "ready"
+              : kind === "live"
+                ? JSON.parse(body).service === "knowsphere-api"
+                : typeof JSON.parse(body).detail === "string");
     console.log(`${valid ? "PASS" : "FAIL"} ${path}: HTTP ${response.status}`);
     if (!valid) failures++;
   } catch (error) {
@@ -45,6 +50,8 @@ await Promise.all([
     "/app/settings",
   ].map((path) => check(path, 200, "html")),
   check("/favicon.svg", 200, "image"),
+  check("/images/orbital-cockpit.jpg", 200, "image"),
+  check("/fonts/fonts.css", 200, "css"),
   check("/api/health/live", 200, "live"),
   check("/api/health/ready", 200, "ready"),
   check("/api/auth/me", 401, "auth"),
@@ -55,4 +62,4 @@ if (failures) {
     `${failures} check(s) failed. Check the API proxy, database readiness and hosting logs.`,
   );
   process.exitCode = 1;
-} else console.log("All 14 deployment smoke checks passed.");
+} else console.log(`All ${checks} deployment smoke checks passed.`);

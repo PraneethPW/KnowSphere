@@ -143,3 +143,13 @@ Removed the decorative 3D reactor, background artwork, custom cockpit fonts, app
 Local automated checks passed: 34 backend tests against disposable local PostgreSQL, 9 frontend tests, frontend typecheck/build, Railway infrastructure typecheck, deployment routing preflight and all 14 local proxy smoke checks. The production dependency audit reported no vulnerabilities. Compiled CSS decreased from approximately 127 kB to 78 kB before compression; the removed fonts and background image are no longer downloaded.
 
 Browser checks covered the landing page, matching mobile sign-in/registration layouts, protected upload-link return after sign-in, source upload controls, dashboard-to-chat question prefill, real pinned-model search with original excerpts, mobile navigation, actual model status and list/3D graph switching without console errors. A separately isolated local source/event fixture verified the dashboard processing count changing 0 → 1 → 0 and its recent-source row appearing/disappearing without a reload. That fixture was removed; no fixture is shipped or seeded in production. Open-search caches now invalidate on source publication and deletion events.
+
+## Immersive visual identity restored — 27 November 2026
+
+Kept the focused product flow and restored the original navy/cyan/orange palette, orbital background image, licensed local fonts, 3D landing artwork, shared panel glow, primary-control shimmer, sticky translucent navigation, scroll progress and scroll-triggered reveals. Authentication and dashboard use the same visual surfaces. The restoration adds no operational panels, fake metrics or changes to AI/ML behavior.
+
+Browser checks verified the desktop and 390px landing/authentication layouts, absence of horizontal overflow, actual WebGL artwork, feature-card opacity after anchor scrolling, progress-line updates, dashboard appearance, real local model search and original-source excerpts. No browser console errors were recorded. The decorative reactor mounts only near the viewport and pauses when the document is hidden. Explicit reduced-motion branches preserve static artwork and disable parallax, shimmer and automatic rotation; the data graph remains user-controlled.
+
+Frontend typecheck, production build and 9 tests passed. The unchanged backend passed all 34 tests against disposable local PostgreSQL.
+
+All 16 local deployment smoke checks passed, including the restored image and font stylesheet. The smoke script now reports its actual check count.

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -19,6 +20,7 @@ import { date, Empty, ErrorBox, number, Spinner } from "../components/UI";
 
 export default function DashboardHome() {
   const { space, user, openSearch, openDocument } = useWorkspace();
+  const reduced = useReducedMotion();
   const stats = useOverview(),
     live = useLive(),
     navigate = useNavigate();
@@ -51,7 +53,13 @@ export default function DashboardHome() {
           <Plus size={18} /> Add source
         </Link>
       </div>
-      <section className="dashboard-ask panel" aria-labelledby="ask-title">
+      <motion.section
+        className="dashboard-ask panel"
+        aria-labelledby="ask-title"
+        initial={reduced ? false : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <span className="product-label">
           <Sparkles size={17} /> AI answers, grounded in your sources
         </span>
@@ -82,7 +90,7 @@ export default function DashboardHome() {
           </button>
           <span>ML-ranked results · Original text</span>
         </div>
-      </section>
+      </motion.section>
       {stats.error && (
         <ErrorBox error={stats.error} retry={() => void stats.refetch()} />
       )}
@@ -131,7 +139,13 @@ export default function DashboardHome() {
         </div>
       )}
       <div className="dashboard-content">
-        <section className="panel recent-sources">
+        <motion.section
+          className="panel recent-sources"
+          initial={reduced ? false : { opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.12 }}
+          transition={{ duration: 0.5 }}
+        >
           <div className="panel-heading">
             <h2>Recent sources</h2>
             <Link className="text-link" to="/app/library">
@@ -186,8 +200,14 @@ export default function DashboardHome() {
             {live.connected ? "Live updates connected" : "Updates reconnecting"}
             <span>View activity</span>
           </Link>
-        </section>
-        <section className="panel dashboard-intelligence">
+        </motion.section>
+        <motion.section
+          className="panel dashboard-intelligence"
+          initial={reduced ? false : { opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.12 }}
+          transition={{ duration: 0.5, delay: 0.08 }}
+        >
           <div className="panel-heading">
             <h2>AI & ML</h2>
             <Link className="text-link" to="/app/settings">
@@ -250,7 +270,7 @@ export default function DashboardHome() {
           <Link className="dashboard-activity-link" to="/app/graph">
             <GitBranch size={16} /> Explore your knowledge graph
           </Link>
-        </section>
+        </motion.section>
       </div>
     </>
   );

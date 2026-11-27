@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import type { FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +11,7 @@ import { ErrorBox, Logo, Spinner } from "./components/UI";
 
 export default function Auth() {
   const [params, setParams] = useSearchParams();
+  const reduced = useReducedMotion();
   const registering = params.get("mode") === "register";
   const [busy, setBusy] = useState(false),
     [error, setError] = useState<unknown>(null),
@@ -47,7 +49,12 @@ export default function Auth() {
       <Link to="/" className="access-home" aria-label="KnowSphere home">
         <Logo />
       </Link>
-      <section className="access-card">
+      <motion.section
+        className="access-card"
+        initial={reduced ? false : { opacity: 0, y: 18 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55 }}
+      >
         <h1>{registering ? "Create your account" : "Welcome back"}</h1>
         <p>
           {registering
@@ -178,7 +185,7 @@ export default function Auth() {
             AI processing sends relevant text to OpenRouter.
           </span>
         </div>
-      </section>
+      </motion.section>
     </main>
   );
 }

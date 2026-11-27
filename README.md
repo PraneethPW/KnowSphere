@@ -54,7 +54,7 @@ The two application source folders are `frontend` and `backend` (the spelling is
 - **Search sources**: use the header button, the dashboard search action, or Cmd/Ctrl+K. MiniLM ranks candidate passages and every result opens its original source. Results refresh when the graph publishes or sources are removed.
 - **Settings**: model readiness, AI configuration, worker health, account details, workspace rename, and graph export.
 
-The interface uses a restrained dark palette and shared controls across landing, authentication, and workspace pages. Decorative backgrounds, the landing reactor, radar, appearance switches, global telemetry, and repeated idle panels have been removed. Three.js loads only when the user chooses the 3D graph; it renders on demand without ambient rotation. Live updates require no manual page refresh, but AI processing remains subject to provider availability and quotas.
+The simpler workflow retains the immersive navy/cyan/orange visual identity throughout landing, authentication, and workspace pages: shared orbital background artwork, self-hosted typography, glowing surfaces, shimmering primary controls, scroll progress, parallax and reveal transitions. The decorative landing reactor loads near the viewport and unmounts offscreen; its render loop pauses when the document is hidden. Reduced-motion preferences disable automatic rotation, parallax and shimmer while preserving a static visual design. The optional data graph still renders on demand without ambient rotation. Radar, global telemetry and repeated idle panels remain removed. Live updates require no manual page refresh, but AI processing remains subject to provider availability and quotas.
 
 ## Stack and architecture
 

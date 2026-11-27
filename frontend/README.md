@@ -42,7 +42,8 @@ Three.js is intentionally lazy loaded. The graph's force layout runs in a Web Wo
 | `src/layout.worker.ts` | Force layout derived from actual entity/relationship IDs |
 | `src/pages/Chat.tsx` | True streamed answers, saved history and citations |
 | `src/api.ts` | Typed request wrapper, streaming parser and exports |
-| `src/styles.css`, `src/product.css` | Shared controls, restrained product surfaces and responsive layouts |
+| `src/styles.css`, `src/product.css`, `src/immersive.css` | Shared controls, responsive product layouts and the immersive visual theme |
+| `src/components/Atmosphere.tsx`, `src/components/Orb.tsx` | Shared background/scroll progress and the lazy decorative landing reactor |
 
 ## Deploy to Vercel
 
@@ -68,6 +69,6 @@ The deployment preflight fails clearly when the rewrite has not been configured.
 
 The header search and Cmd/Ctrl+K open actual entity/passage search. The dashboard can pass its current question into ML search or AI chat. Chat renders genuine provider tokens and a compact status for retrieval, generation, citation validation and persistence. Citation-repair reset frames replace the provisional draft; an answer is shown as saved only after the persistence event. Source evidence, errors and retry controls remain accessible.
 
-Detailed processing checkpoints and event history live in Activity. Graph analytics are linked from the graph toolbar. Model identifiers and configuration details live in Settings. Landing and authentication have no decorative WebGL canvas, image background, custom font downloads or appearance controls.
+Detailed processing checkpoints and event history live in Activity. Graph analytics are linked from the graph toolbar. Model identifiers and configuration details live in Settings. The concise workflow preserves the original navy/cyan/orange visual theme across every page. `src/immersive.css` supplies background artwork, local typography, panel glow, input focus, control shimmer and shared surfaces. Landing features reveal on scroll, the 3D artwork has scroll parallax, and a thin progress line follows document scrolling. The decorative reactor mounts near the viewport, unmounts offscreen, and pauses WebGL rendering in hidden tabs. Reduced-motion preferences select a static illustration and disable shimmer/parallax/ambient animation. The scene boundary handles unavailable decorative graphics without hiding page content. No extra appearance controls or operational panels are added.
 
 A module boundary offers an explicit reload notice when a tab outlives its deployment. It does not automatically discard text being edited. See [../INSTALL.md](../INSTALL.md) for environment variables and setup.

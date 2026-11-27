@@ -2,7 +2,7 @@ import { Component } from "react";
 import type { ReactNode } from "react";
 
 export default class VisualBoundary extends Component<
-  { children: ReactNode; fallback?: ReactNode },
+  { children: ReactNode; fallback?: ReactNode; decorative?: boolean },
   { failed: boolean; updated: boolean }
 > {
   state = { failed: false, updated: false };
@@ -15,7 +15,7 @@ export default class VisualBoundary extends Component<
     };
   }
   render() {
-    if (this.state.updated)
+    if (this.state.updated && !this.props.decorative)
       return (
         <div className="release-notice" role="alert">
           <h3>A new version is available</h3>
